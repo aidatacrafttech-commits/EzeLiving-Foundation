@@ -149,3 +149,6 @@ export interface RouteDef {
   path: string;
   handler: (ctx: Ctx) => Promise<any>;
 }
+
+/** Untyped view of the database client, for inserts/updates built dynamically. */
+export const dbAny = db as any;
