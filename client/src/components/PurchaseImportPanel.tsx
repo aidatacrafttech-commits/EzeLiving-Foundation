@@ -162,7 +162,7 @@ export function PurchaseImportPanel({ warehouses, onConfirm, onClose }: Purchase
 
           {(!codeMapped || !quantityMapped || !costPriceMapped) && (
             <p className="error-text">
-              <TriangleAlert size={14} /> Map a column to Barcode/SKU, Quantity received, and Cost price to continue.
+              <TriangleAlert size={14} /> Map a column to Barcode/SKU, Quantity received, and Selling price to continue.
             </p>
           )}
           {error && (
@@ -204,7 +204,7 @@ export function PurchaseImportPanel({ warehouses, onConfirm, onClose }: Purchase
                   <th>Matched product</th>
                   <th>Quantity</th>
                   <th>Damaged</th>
-                  <th>Cost price</th>
+                  <th>Selling price</th>
                   <th>Status</th>
                 </tr>
               </thead>
