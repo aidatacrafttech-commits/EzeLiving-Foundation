@@ -8,7 +8,7 @@ export type RestockFieldKey = "code" | "quantity" | "costPrice" | "damagedQty";
 export const RESTOCK_FIELD_LABELS: Record<RestockFieldKey, string> = {
   code: "Barcode / SKU",
   quantity: "Quantity received",
-  costPrice: "Cost price",
+  costPrice: "Selling price",
   damagedQty: "Damaged (transit)",
 };
 
@@ -93,7 +93,7 @@ export function validateAndResolveRestockRows(
       errors.push("Quantity must be a positive number");
     }
     if (row.costPrice.trim() === "" || Number.isNaN(Number(row.costPrice)) || Number(row.costPrice) < 0) {
-      errors.push("Cost price must be a non-negative number");
+      errors.push("Selling price must be a non-negative number");
     }
     if (row.damagedQty.trim() !== "" && (Number.isNaN(Number(row.damagedQty)) || Number(row.damagedQty) < 0)) {
       errors.push("Damaged qty must be a non-negative number");
