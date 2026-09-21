@@ -83,7 +83,7 @@ async function createCustomer(ctx: Ctx) {
     }
     const res = await db
       .from("customers")
-      .insert({ ...fields, phone, updated_at: now })
+      .insert({ ...fields, phone, updated_at: now } as any)
       .select("*")
       .single();
     return toCamel(unwrap(res));
@@ -91,7 +91,7 @@ async function createCustomer(ctx: Ctx) {
 
   const res = await db
     .from("customers")
-    .insert({ ...fields, updated_at: now })
+    .insert({ ...fields, updated_at: now } as any)
     .select("*")
     .single();
   return toCamel(unwrap(res));
@@ -343,7 +343,7 @@ async function updateUser(ctx: Ctx) {
     ...(data.password !== undefined ? { password_hash: await bcrypt.hash(data.password, 10) } : {}),
   };
 
-  const res = await db.from("users").update(updateFields).eq("id", id).select(userSummaryColumns).single();
+  const res = await db.from("users").update(updateFields as any).eq("id", id).select(userSummaryColumns).single();
   const updated = unwrap(res);
 
   if (data.isActive !== undefined && data.isActive !== existing.is_active) {
