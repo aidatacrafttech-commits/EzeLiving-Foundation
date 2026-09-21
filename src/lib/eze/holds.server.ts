@@ -262,7 +262,9 @@ async function listHoldInvoices(ctx: Ctx) {
 
   const statusParam = ctx.query.get("status");
   const status =
-    statusParam && (HOLD_STATUSES as readonly string[]).includes(statusParam) ? statusParam : undefined;
+    statusParam && (HOLD_STATUSES as readonly string[]).includes(statusParam)
+      ? (statusParam as (typeof HOLD_STATUSES)[number])
+      : undefined;
 
   let query = db.from("hold_invoices").select(HOLD_INCLUDE).order("created_at", { ascending: false }).limit(200);
   if (status) query = query.eq("status", status);
