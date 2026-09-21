@@ -267,7 +267,7 @@ export function Layout() {
                     title="Sign out of system"
                   >
                     <LogOut size={14} />
-                    <span>Exit</span>
+                    <span>Logout</span>
                   </button>
                 </div>
               )}
