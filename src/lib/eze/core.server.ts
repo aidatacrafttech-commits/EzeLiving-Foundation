@@ -142,3 +142,10 @@ export async function recordAudit(input: {
 export function num(value: unknown): number {
   return value === null || value === undefined ? 0 : Number(value);
 }
+
+export interface RouteDef {
+  method: "GET" | "POST" | "PUT" | "DELETE";
+  /** Path relative to the API base, e.g. "invoices/:id/pdf". */
+  path: string;
+  handler: (ctx: Ctx) => Promise<any>;
+}
