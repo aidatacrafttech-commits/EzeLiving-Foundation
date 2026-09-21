@@ -40,7 +40,7 @@ async function createPurchase(ctx: Ctx) {
 
   const purchaseNumber = await nextDocumentNumber("PURCHASE", "PO-");
 
-  const purchase = unwrap(
+  const purchase: any = unwrap(
     await db
       .from("purchases")
       .insert({
@@ -65,7 +65,7 @@ async function createPurchase(ctx: Ctx) {
   const createdItems = unwrap(await db.from("purchase_items").insert(itemsToInsert as any).select("*"));
 
   for (const item of data.items) {
-    const existing = unwrap(
+    const existing: any = unwrap(
       await db
         .from("stock")
         .select("*")
@@ -150,9 +150,9 @@ async function createPurchase(ctx: Ctx) {
 }
 
 async function getPurchaseById(id: number) {
-  const purchase = unwrap(await db.from("purchases").select("*").eq("id", id).maybeSingle());
+  const purchase: any = unwrap(await db.from("purchases").select("*").eq("id", id).maybeSingle());
   if (!purchase) throw new ApiError(404, "Purchase not found");
-  return hydratePurchases([purchase])[0];
+  return (await hydratePurchases([purchase]))[0];
 }
 
 async function hydratePurchases(purchases: any[]) {
@@ -160,14 +160,16 @@ async function hydratePurchases(purchases: any[]) {
   const purchaseIds = purchases.map((p) => p.id);
   const supplierIds = [...new Set(purchases.map((p) => p.supplier_id).filter((x) => x != null))];
 
-  const [items, suppliers] = await Promise.all([
-    unwrap(
-      await db
-        .from("purchase_items")
-        .select("*, product:products(*), warehouse:warehouses(*)")
-        .in("purchase_id", purchaseIds)
+  const [items, suppliers]: [any[], any[]] = await Promise.all([
+    Promise.resolve(
+      unwrap(
+        await db
+          .from("purchase_items")
+          .select("*, product:products(*), warehouse:warehouses(*)")
+          .in("purchase_id", purchaseIds)
+      )
     ),
-    supplierIds.length ? unwrap(await db.from("suppliers").select("*").in("id", supplierIds)) : Promise.resolve([]),
+    supplierIds.length ? Promise.resolve(unwrap(await db.from("suppliers").select("*").in("id", supplierIds))) : Promise.resolve([]),
   ]);
 
   const supplierMap = new Map((suppliers as any[]).map((s: any) => [s.id, s]));
@@ -226,7 +228,7 @@ async function createSupplierReturn(ctx: Ctx) {
       .eq("warehouse_id", data.warehouseId)
       .in("product_id", productIds)
   );
-  const stockMap = new Map((stockRows as any[]).map((s: any) => [s.product_id, s]));
+  const stockMap = new Map<number, any>((stockRows as any[]).map((s: any) => [s.product_id, s]));
 
   for (const item of data.items) {
     const stock = stockMap.get(item.productId);
@@ -240,10 +242,10 @@ async function createSupplierReturn(ctx: Ctx) {
   }
 
   const returnNumber = await nextDocumentNumber("SUPPLIER_RETURN", "SR-");
-  const warehouse = unwrap(await db.from("warehouses").select("*").eq("id", data.warehouseId).maybeSingle());
+  const warehouse: any = unwrap(await db.from("warehouses").select("*").eq("id", data.warehouseId).maybeSingle());
   if (!warehouse) throw new ApiError(400, `Warehouse ${data.warehouseId} not found`);
 
-  const created = unwrap(
+  const created: any = unwrap(
     await db
       .from("supplier_returns")
       .insert({
@@ -301,9 +303,9 @@ async function createSupplierReturn(ctx: Ctx) {
 }
 
 async function getSupplierReturnById(id: number) {
-  const supplierReturn = unwrap(await db.from("supplier_returns").select("*").eq("id", id).maybeSingle());
+  const supplierReturn: any = unwrap(await db.from("supplier_returns").select("*").eq("id", id).maybeSingle());
   if (!supplierReturn) throw new ApiError(404, "Supplier return not found");
-  return hydrateSupplierReturns([supplierReturn])[0];
+  return (await hydrateSupplierReturns([supplierReturn]))[0];
 }
 
 async function hydrateSupplierReturns(returns: any[]) {
@@ -312,10 +314,10 @@ async function hydrateSupplierReturns(returns: any[]) {
   const supplierIds = [...new Set(returns.map((r) => r.supplier_id).filter((x) => x != null))];
   const warehouseIds = [...new Set(returns.map((r) => r.warehouse_id))];
 
-  const [items, suppliers, warehouses] = await Promise.all([
-    unwrap(await db.from("supplier_return_items").select("*, product:products(*)").in("supplier_return_id", returnIds)),
-    supplierIds.length ? unwrap(await db.from("suppliers").select("*").in("id", supplierIds)) : Promise.resolve([]),
-    unwrap(await db.from("warehouses").select("*").in("id", warehouseIds)),
+  const [items, suppliers, warehouses]: [any[], any[], any[]] = await Promise.all([
+    Promise.resolve(unwrap(await db.from("supplier_return_items").select("*, product:products(*)").in("supplier_return_id", returnIds))),
+    supplierIds.length ? Promise.resolve(unwrap(await db.from("suppliers").select("*").in("id", supplierIds))) : Promise.resolve([]),
+    Promise.resolve(unwrap(await db.from("warehouses").select("*").in("id", warehouseIds))),
   ]);
 
   const supplierMap = new Map((suppliers as any[]).map((s: any) => [s.id, s]));
