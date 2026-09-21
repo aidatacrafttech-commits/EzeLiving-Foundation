@@ -415,7 +415,7 @@ export function AdminPurchases() {
                     <th>Product</th>
                     <th>Total received (good)</th>
                     <th>Damaged (transit)</th>
-                    <th>Cost price</th>
+                    <th>Selling price</th>
                     {warehouses.map((w) => (
                       <th key={w.id}>{w.name}</th>
                     ))}
@@ -687,7 +687,7 @@ export function AdminPurchases() {
                           <th>Warehouse</th>
                           <th>Qty</th>
                           <th>Damaged (transit)</th>
-                          <th>Cost price</th>
+                          <th>Selling price</th>
                           <th>Line total</th>
                         </tr>
                       </thead>
