@@ -421,7 +421,7 @@ export function AdminProducts() {
         if (!row) return;
         if (result.success) {
           succeededIds.add(row.id);
-        } else {
+        } else if (result.success === false) {
           errorById.set(row.id, result.error);
         }
       });
