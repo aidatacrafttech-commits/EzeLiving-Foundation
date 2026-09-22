@@ -4,6 +4,7 @@ import { AlertTriangle, CalendarDays, LayoutDashboard, PackageX, Receipt, Truck,
 import {
   Bar,
   BarChart,
+  CartesianGrid,
   Cell,
   Legend,
   Pie,
@@ -16,7 +17,42 @@ import {
 import { api } from "../api/client";
 import type { DamagedStockRow, DamageSource, LowStockRow, SalesSummary } from "../types";
 
-const WAREHOUSE_COLORS = ["#96162f", "#059669", "#d97706", "#2563eb", "#7c3aed"];
+const WAREHOUSE_COLORS = [
+  "var(--brand-500)",
+  "var(--success-dark)",
+  "var(--warning-dark)",
+  "var(--info-dark)",
+  "var(--accent-purple)",
+];
+
+function ProductQtyTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { name: string; sku: string; qty: number } }> }) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0]!.payload;
+  return (
+    <div className="chart-tooltip">
+      <div className="chart-tooltip-label">
+        {row.name} <span className="muted small">({row.sku})</span>
+      </div>
+      <div className="chart-tooltip-row">
+        <span className="chart-tooltip-dot" style={{ background: "var(--brand-500)" }} />
+        {row.qty} sold
+      </div>
+    </div>
+  );
+}
+
+function WarehouseSalesTooltip({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number; color?: string }> }) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0]!;
+  return (
+    <div className="chart-tooltip">
+      <div className="chart-tooltip-row">
+        <span className="chart-tooltip-dot" style={{ background: row.color }} />
+        {row.name}: ₹{row.value.toFixed(2)}
+      </div>
+    </div>
+  );
+}
 
 const DAMAGE_SOURCE_LABEL: Record<DamageSource, string> = {
   transit: "Damage on Transit",
@@ -126,22 +162,25 @@ export function Dashboard() {
                   layout="vertical"
                   margin={{ top: 4, right: 24, bottom: 4, left: 4 }}
                 >
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="3 3" />
+                  <XAxis
+                    type="number"
+                    allowDecimals={false}
+                    tick={{ fontSize: 11, fill: "var(--muted)" }}
+                    axisLine={{ stroke: "var(--border)" }}
+                    tickLine={false}
+                  />
                   <YAxis
                     type="category"
                     dataKey="name"
                     width={140}
-                    tick={{ fontSize: 12 }}
+                    tick={{ fontSize: 12, fill: "var(--text-soft)" }}
+                    axisLine={{ stroke: "var(--border)" }}
+                    tickLine={false}
                     tickFormatter={(name: string) => (name.length > 18 ? `${name.slice(0, 17)}…` : name)}
                   />
-                  <Tooltip
-                    formatter={(value: number) => [`${value} sold`, "Qty"]}
-                    labelFormatter={(_label, payload) => {
-                      const row = payload?.[0]?.payload as { name: string; sku: string } | undefined;
-                      return row ? `${row.name} (${row.sku})` : "";
-                    }}
-                  />
-                  <Bar dataKey="qty" fill="#96162f" radius={[0, 4, 4, 0]} barSize={18} />
+                  <Tooltip content={<ProductQtyTooltip />} cursor={{ fill: "var(--chip-bg)" }} />
+                  <Bar dataKey="qty" fill="var(--brand-500)" radius={[0, 4, 4, 0]} barSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -164,14 +203,22 @@ export function Dashboard() {
                     nameKey="name"
                     innerRadius={55}
                     outerRadius={85}
-                    paddingAngle={2}
+                    paddingAngle={3}
+                    stroke="var(--surface)"
+                    strokeWidth={2}
                   >
                     {summary.salesByWarehouse.map((w, i) => (
                       <Cell key={w.warehouseId} fill={WAREHOUSE_COLORS[i % WAREHOUSE_COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(value: number) => [`₹${value.toFixed(2)}`, "Sales"]} />
-                  <Legend verticalAlign="bottom" height={32} wrapperStyle={{ fontSize: 12 }} />
+                  <Tooltip content={<WarehouseSalesTooltip />} />
+                  <Legend
+                    verticalAlign="bottom"
+                    height={32}
+                    wrapperStyle={{ fontSize: 12, color: "var(--text-soft)" }}
+                    iconType="circle"
+                    iconSize={8}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             </div>
