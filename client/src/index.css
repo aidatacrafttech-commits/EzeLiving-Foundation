@@ -1882,58 +1882,19 @@ tr.current-warehouse:hover {
 
 .stat-card {
   display: flex;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  gap: 5px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  padding: 20px 22px;
-  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  padding: 18px 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .stat-card:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-lg);
-}
-
-.stat-card .stat-icon {
-  width: 46px;
-  height: 46px;
-  flex-shrink: 0;
-  border-radius: 13px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* KPI Icon Variants — soft pastel badge + mid-tone glyph, no gradients */
-.stat-card.stat-sales-today .stat-icon {
-  background: var(--success-bg);
-  color: var(--success-dark);
-}
-
-.stat-card.stat-sales-month .stat-icon {
-  background: var(--brand-50);
-  color: var(--brand-600);
-}
-
-.stat-card.stat-low-stock .stat-icon {
-  background: var(--warning-bg);
-  color: var(--warning-dark);
-}
-
-.stat-card.stat-damaged .stat-icon {
-  background: var(--danger-bg);
-  color: var(--danger-dark);
-}
-
-.stat-card > div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .stat-label {
@@ -1945,11 +1906,27 @@ tr.current-warehouse:hover {
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 25px;
   font-weight: 800;
   font-family: var(--font-display);
   letter-spacing: -0.02em;
   color: var(--text);
+}
+
+.stat-card.stat-sales-today .stat-value {
+  color: var(--brand-600);
+}
+
+.stat-card.stat-sales-month .stat-value {
+  color: var(--success-dark);
+}
+
+.stat-card.stat-low-stock .stat-value {
+  color: var(--warning-dark);
+}
+
+.stat-card.stat-damaged .stat-value {
+  color: var(--danger-dark);
 }
 
 .stat-sub {
@@ -1987,6 +1964,86 @@ tr.current-warehouse:hover {
   color: var(--text);
   margin-bottom: 12px;
   font-weight: 800;
+}
+
+/* Donut chart with a centered total + a right-side legend list */
+.donut-chart-row {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  flex-wrap: wrap;
+}
+
+.donut-chart-wrap {
+  position: relative;
+  width: 176px;
+  height: 176px;
+  flex-shrink: 0;
+}
+
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+}
+
+.donut-center-value {
+  font-size: 19px;
+  font-weight: 800;
+  font-family: var(--font-display);
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.donut-center-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.donut-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  flex: 1;
+  min-width: 170px;
+}
+
+.donut-legend li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+}
+
+.donut-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.donut-legend-name {
+  color: var(--text-soft);
+  font-weight: 600;
+  flex: 1;
+}
+
+.donut-legend-value {
+  color: var(--text);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Recharts tooltip — solid, theme-aware card (not the library's default) */

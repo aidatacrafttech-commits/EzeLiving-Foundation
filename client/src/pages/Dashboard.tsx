@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, CalendarDays, LayoutDashboard, PackageX, Receipt, Truck, TrendingUp } from "lucide-react";
+import { AlertTriangle, LayoutDashboard, PackageX, Truck } from "lucide-react";
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -98,46 +97,26 @@ export function Dashboard() {
 
       <div className="stat-cards">
         <div className="stat-card stat-sales-today">
-          <span className="stat-icon">
-            <CalendarDays size={20} />
-          </span>
-          <div>
-            <span className="stat-label">Today's Sales</span>
-            <span className="stat-value">₹{Number(summary.today.totalSales).toFixed(2)}</span>
-            <span className="stat-sub">{summary.today.invoiceCount} invoice(s)</span>
-          </div>
+          <span className="stat-label">Today's Sales</span>
+          <span className="stat-value">₹{Number(summary.today.totalSales).toFixed(2)}</span>
+          <span className="stat-sub">{summary.today.invoiceCount} invoice(s)</span>
         </div>
         <div className="stat-card stat-sales-month">
-          <span className="stat-icon">
-            <TrendingUp size={20} />
-          </span>
-          <div>
-            <span className="stat-label">This Month's Sales</span>
-            <span className="stat-value">₹{Number(summary.thisMonth.totalSales).toFixed(2)}</span>
-            <span className="stat-sub">{summary.thisMonth.invoiceCount} invoice(s)</span>
-          </div>
+          <span className="stat-label">This Month's Sales</span>
+          <span className="stat-value">₹{Number(summary.thisMonth.totalSales).toFixed(2)}</span>
+          <span className="stat-sub">{summary.thisMonth.invoiceCount} invoice(s)</span>
         </div>
         <div className="stat-card stat-low-stock">
-          <span className="stat-icon">
-            <Receipt size={20} />
-          </span>
-          <div>
-            <span className="stat-label">Low Stock Items</span>
-            <span className="stat-value">{lowStock.length}</span>
-            <span className="stat-sub">across all warehouses</span>
-          </div>
+          <span className="stat-label">Low Stock Items</span>
+          <span className="stat-value">{lowStock.length}</span>
+          <span className="stat-sub">across all warehouses</span>
         </div>
         <div className="stat-card stat-damaged">
-          <span className="stat-icon">
-            <PackageX size={20} />
+          <span className="stat-label">Damaged Stock</span>
+          <span className="stat-value">{totalTransitDamage + totalShowroomDamage}</span>
+          <span className="stat-sub">
+            {totalTransitDamage} transit · {totalShowroomDamage} showroom
           </span>
-          <div>
-            <span className="stat-label">Damaged Stock</span>
-            <span className="stat-value">{totalTransitDamage + totalShowroomDamage}</span>
-            <span className="stat-sub">
-              {totalTransitDamage} transit · {totalShowroomDamage} showroom
-            </span>
-          </div>
         </div>
       </div>
 
@@ -156,6 +135,12 @@ export function Dashboard() {
                   layout="vertical"
                   margin={{ top: 4, right: 24, bottom: 4, left: 4 }}
                 >
+                  <defs>
+                    <linearGradient id="topProductsBarFill" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="var(--brand-300)" />
+                      <stop offset="100%" stopColor="var(--brand-500)" />
+                    </linearGradient>
+                  </defs>
                   <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="3 3" />
                   <XAxis
                     type="number"
@@ -174,7 +159,7 @@ export function Dashboard() {
                     tickFormatter={(name: string) => (name.length > 18 ? `${name.slice(0, 17)}…` : name)}
                   />
                   <Tooltip content={<ProductQtyTooltip />} cursor={{ fill: "var(--chip-bg)" }} />
-                  <Bar dataKey="qty" fill="var(--brand-400)" radius={[0, 4, 4, 0]} barSize={18} />
+                  <Bar dataKey="qty" fill="url(#topProductsBarFill)" radius={[0, 4, 4, 0]} barSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -188,33 +173,46 @@ export function Dashboard() {
               No sales yet this month.
             </p>
           ) : (
-            <div style={{ width: "100%", height: 260 }}>
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie
-                    data={summary.salesByWarehouse.map((w) => ({ name: w.warehouseName, value: Number(w.totalSales) }))}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={3}
-                    stroke="var(--surface)"
-                    strokeWidth={2}
-                  >
-                    {summary.salesByWarehouse.map((w, i) => (
-                      <Cell key={w.warehouseId} fill={WAREHOUSE_COLORS[i % WAREHOUSE_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<WarehouseSalesTooltip />} />
-                  <Legend
-                    verticalAlign="bottom"
-                    height={32}
-                    wrapperStyle={{ fontSize: 12, color: "var(--text-soft)" }}
-                    iconType="circle"
-                    iconSize={8}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+            <div className="donut-chart-row">
+              <div className="donut-chart-wrap">
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={summary.salesByWarehouse.map((w) => ({ name: w.warehouseName, value: Number(w.totalSales) }))}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={60}
+                      outerRadius={82}
+                      paddingAngle={3}
+                      stroke="var(--surface)"
+                      strokeWidth={2}
+                    >
+                      {summary.salesByWarehouse.map((w, i) => (
+                        <Cell key={w.warehouseId} fill={WAREHOUSE_COLORS[i % WAREHOUSE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<WarehouseSalesTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="donut-center">
+                  <span className="donut-center-value">
+                    ₹{summary.salesByWarehouse.reduce((sum, w) => sum + Number(w.totalSales), 0).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                  </span>
+                  <span className="donut-center-label">Total</span>
+                </div>
+              </div>
+              <ul className="donut-legend">
+                {summary.salesByWarehouse.map((w, i) => (
+                  <li key={w.warehouseId}>
+                    <span
+                      className="donut-legend-dot"
+                      style={{ background: WAREHOUSE_COLORS[i % WAREHOUSE_COLORS.length] }}
+                    />
+                    <span className="donut-legend-name">{w.warehouseName}</span>
+                    <span className="donut-legend-value">₹{Number(w.totalSales).toFixed(2)}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>
