@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Banknote, Camera, CheckCircle2, CreditCard, Package, PauseCircle, ScanLine, ShoppingCart, Smartphone, Tag, TriangleAlert, X } from "lucide-react";
+import QRCode from "qrcode";
+import type { Socket } from "socket.io-client";
+import { Banknote, Camera, CheckCircle2, CreditCard, Package, PauseCircle, QrCode, ScanLine, ShoppingCart, Smartphone, Tag, TriangleAlert, X } from "lucide-react";
 import { api, apiErrorMessage } from "../api/client";
 import { useCart } from "../context/CartContext";
 import { ScanInput, type ScanInputHandle } from "../components/ScanInput";
 import { CameraScanner } from "../components/CameraScanner";
 import { ProductLookupCard } from "../components/ProductLookupCard";
 import { CartTable } from "../components/CartTable";
+import { getScanSocket } from "../lib/scanSocket";
 import type { Customer, PaymentMode, Product, Warehouse } from "../types";
 
 const IDEMPOTENCY_STORAGE_KEY = "billing.invoiceIdempotencyKey";
@@ -45,6 +48,10 @@ export function Billing() {
   const [scannedProduct, setScannedProduct] = useState<Product | null>(null);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const [showCamera, setShowCamera] = useState(false);
+  const [pairing, setPairing] = useState<{ sessionId: string; qrDataUrl: string } | null>(null);
+  const [lastRemoteScan, setLastRemoteScan] = useState<string | null>(null);
+  const pairingSocketRef = useRef<Socket | null>(null);
+  const pairingScanHandlerRef = useRef<((barcode: string) => void) | null>(null);
 
   const [customerSearch, setCustomerSearch] = useState("");
   const [customerResults, setCustomerResults] = useState<Customer[]>([]);
@@ -123,6 +130,47 @@ export function Billing() {
     // instead of being typed into nothing.
     scanInputRef.current?.focus();
   }
+
+  function cleanupPairing() {
+    const socket = pairingSocketRef.current;
+    if (socket) {
+      if (pairingScanHandlerRef.current) socket.off("scan-barcode", pairingScanHandlerRef.current);
+      socket.disconnect();
+    }
+    pairingSocketRef.current = null;
+    pairingScanHandlerRef.current = null;
+  }
+
+  async function startPairing() {
+    cleanupPairing();
+    const sessionId = crypto.randomUUID();
+    const remoteUrl = `${window.location.origin}/remote-scan/${sessionId}`;
+    const qrDataUrl = await QRCode.toDataURL(remoteUrl, { margin: 1, width: 200 });
+
+    const socket = getScanSocket();
+    const onRemoteScan = (barcode: string) => {
+      setLastRemoteScan(barcode);
+      handleScan(barcode);
+    };
+    socket.connect();
+    socket.emit("join-scan-session", sessionId);
+    socket.on("scan-barcode", onRemoteScan);
+    pairingSocketRef.current = socket;
+    pairingScanHandlerRef.current = onRemoteScan;
+    setLastRemoteScan(null);
+    setPairing({ sessionId, qrDataUrl });
+  }
+
+  function stopPairing() {
+    cleanupPairing();
+    setPairing(null);
+    setLastRemoteScan(null);
+  }
+
+  useEffect(() => {
+    return () => cleanupPairing();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function createNewCustomer(): Promise<Customer> {
     // Upserts by phone on the server — this is the Customer Database's entry
@@ -286,6 +334,28 @@ export function Billing() {
           <Camera size={13} /> {showCamera ? "Hide camera scanner" : "Use phone camera instead"}
         </button>
         {showCamera && <CameraScanner onScan={handleScan} />}
+
+        <button type="button" className="link-button" onClick={() => (pairing ? stopPairing() : startPairing())}>
+          <QrCode size={13} /> {pairing ? "Stop phone pairing" : "Pair phone as wireless scanner"}
+        </button>
+        {pairing && (
+          <div className="phone-pair-panel">
+            <img src={pairing.qrDataUrl} alt="QR code to pair your phone" width={160} height={160} />
+            <div>
+              <p className="help-text">
+                Scan this with your phone's camera (or open the same link on your phone) to use it as a wireless
+                barcode scanner for this billing screen. Keep this tab open.
+              </p>
+              {lastRemoteScan ? (
+                <p className="success-text">
+                  <CheckCircle2 size={14} /> Last scan from phone: {lastRemoteScan}
+                </p>
+              ) : (
+                <p className="help-text">Waiting for a scan from the phone…</p>
+              )}
+            </div>
+          </div>
+        )}
 
         {lookupError && (
           <p className="error-text">

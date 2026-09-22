@@ -1039,6 +1039,29 @@ label {
   box-shadow: var(--shadow-sm);
 }
 
+.phone-pair-panel {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  border: 2px dashed var(--brand-300);
+  box-shadow: var(--shadow-sm);
+}
+
+.phone-pair-panel img {
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.remote-scan-page {
+  max-width: 420px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
 /* Product Card Preview */
 
 .product-card {

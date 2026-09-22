@@ -1,6 +1,9 @@
 import axios from "axios";
 
 export const api = axios.create({
+  // Points at the Lovable-ported backend (src/lib/eze/*.server.ts), mounted
+  // under /api/public/eze — not our standalone Express server, which isn't
+  // what's actually deployed here.
   baseURL: import.meta.env.VITE_API_URL ?? "/api/public/eze",
 });
 
