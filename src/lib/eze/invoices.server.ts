@@ -896,7 +896,7 @@ function buildInvoicePdf(invoice: InvoicePdfData): Uint8Array {
     ["Invoice No.", invoice.invoiceNumber],
     ["Dated", invoice.createdAt.toLocaleDateString()],
     ["Payment Mode", invoice.paymentMode.toUpperCase()],
-    ["Place of Supply", invoice.warehouse.name + (invoice.warehouse.location ? ` (${invoice.warehouse.location})` : "")],
+    ["Place of Supply", invoice.warehouse.name],
   ];
   let ry = headerBoxTop - 14;
   for (const [label, val] of metaRows) {
