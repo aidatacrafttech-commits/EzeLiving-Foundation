@@ -1,16 +1,8 @@
-import http from "http";
 import { app } from "./app";
 import { env } from "./config/env";
 import { sweepExpiredHolds } from "./services/holdExpiry";
-import { attachScanPairing } from "./realtime/scanPairing";
 
-// http.createServer(app) is exactly what app.listen() does under the hood —
-// pulled out explicitly here so socket.io (remote phone-scanner pairing) can
-// share the same HTTP server/port instead of needing one of its own.
-const httpServer = http.createServer(app);
-attachScanPairing(httpServer);
-
-httpServer.listen(env.port, () => {
+app.listen(env.port, () => {
   console.log(`API server listening on http://localhost:${env.port}`);
 });
 

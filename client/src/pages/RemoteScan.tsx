@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { CheckCircle2, ScanLine } from "lucide-react";
 import { CameraScanner } from "../components/CameraScanner";
-import { getScanSocket } from "../lib/scanSocket";
+import { closeScanChannel, openScanChannel, sendScan } from "../lib/scanSocket";
 
 // Opened on the phone by scanning the QR code from Billing's "Pair phone"
 // panel. No login here — the session id in the URL is the only credential,
@@ -11,19 +12,21 @@ export function RemoteScan() {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [lastSent, setLastSent] = useState<string | null>(null);
   const lastScanRef = useRef<{ code: string; at: number } | null>(null);
+  const channelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
     if (!sessionId) return;
-    const socket = getScanSocket();
-    socket.connect();
-    socket.emit("join-scan-session", sessionId);
+    const channel = openScanChannel(sessionId);
+    channel.subscribe();
+    channelRef.current = channel;
     return () => {
-      socket.disconnect();
+      closeScanChannel(channel);
+      channelRef.current = null;
     };
   }, [sessionId]);
 
   function handleScan(barcode: string) {
-    if (!sessionId) return;
+    if (!sessionId || !channelRef.current) return;
     // The camera re-reads a held-up barcode on every frame — collapse
     // repeats of the same code within a couple of seconds into one send so
     // a single scan doesn't hit the laptop's lookup over and over.
@@ -32,7 +35,7 @@ export function RemoteScan() {
       return;
     }
     lastScanRef.current = { code: barcode, at: now };
-    getScanSocket().emit("scan-barcode", { sessionId, barcode });
+    sendScan(channelRef.current, barcode);
     setLastSent(barcode);
   }
 

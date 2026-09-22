@@ -1,17 +1,38 @@
-import { io, type Socket } from "socket.io-client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:4000/api";
-// socket.io connects to the server root, not the REST "/api" prefix.
-const SOCKET_URL = API_BASE.replace(/\/api\/?$/, "");
+// Phone-as-wireless-scanner pairing, relayed through a Supabase Realtime
+// broadcast channel — no server of our own required. Lovable Cloud only
+// hosts serverless functions (no always-on process), so a self-run
+// WebSocket server (this used to be socket.io) can't be deployed here;
+// Supabase's Realtime service holds the persistent connection on its own
+// infrastructure instead, and both devices just subscribe to a channel
+// named after the pairing session id.
+const SCAN_EVENT = "scan-barcode";
 
-let socket: Socket | null = null;
+function channelName(sessionId: string): string {
+  return `scan-session-${sessionId}`;
+}
 
-// One socket per browser tab, created lazily and left disconnected until a
-// caller actually needs it (Billing's "Pair phone" panel, or the phone's
-// remote-scan page) — so pages that never touch this feature pay no cost.
-export function getScanSocket(): Socket {
-  if (!socket) {
-    socket = io(SOCKET_URL, { autoConnect: false, transports: ["websocket", "polling"] });
-  }
-  return socket;
+// One channel per active pairing session, created lazily and torn down via
+// the returned cleanup — same "pay no cost until used" shape the socket.io
+// version had.
+export function openScanChannel(sessionId: string): RealtimeChannel {
+  return supabase.channel(channelName(sessionId));
+}
+
+export function sendScan(channel: RealtimeChannel, barcode: string) {
+  channel.send({ type: "broadcast", event: SCAN_EVENT, payload: { barcode } });
+}
+
+export function onScan(channel: RealtimeChannel, handler: (barcode: string) => void): RealtimeChannel {
+  return channel.on("broadcast", { event: SCAN_EVENT }, ({ payload }) => {
+    if (payload && typeof (payload as { barcode?: unknown }).barcode === "string") {
+      handler((payload as { barcode: string }).barcode);
+    }
+  });
+}
+
+export function closeScanChannel(channel: RealtimeChannel) {
+  supabase.removeChannel(channel);
 }
