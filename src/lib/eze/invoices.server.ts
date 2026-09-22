@@ -651,7 +651,7 @@ interface InvoicePdfData {
   packagingCharge?: string;
   transportCharge?: string;
   grandTotal: string;
-  customer: { name: string; phone: string | null; gstNumber: string | null } | null;
+  customer: { name: string; phone: string | null; gstNumber: string | null; address: string | null } | null;
   warehouse: { name: string; location: string | null };
   items: InvoicePdfItem[];
 }
@@ -663,6 +663,7 @@ async function loadInvoicePdfData(id: number): Promise<{ invoice: any; pdfData: 
   const customerName = invoice.customer_name_snapshot ?? invoice.customer?.name ?? null;
   const customerPhone = invoice.customer_phone_snapshot ?? invoice.customer?.phone ?? null;
   const customerGst = invoice.customer_gst_snapshot ?? invoice.customer?.gst_number ?? null;
+  const customerAddress = invoice.customer_address_snapshot ?? invoice.customer?.address ?? null;
   const warehouseName = invoice.warehouse_name_snapshot ?? invoice.warehouse?.name;
   const warehouseLocation = invoice.warehouse_location_snapshot ?? invoice.warehouse?.location;
 
@@ -679,7 +680,9 @@ async function loadInvoicePdfData(id: number): Promise<{ invoice: any; pdfData: 
     packagingCharge: Number(invoice.packaging_charge).toFixed(2),
     transportCharge: Number(invoice.transport_charge).toFixed(2),
     grandTotal: Number(invoice.grand_total).toFixed(2),
-    customer: customerName ? { name: customerName, phone: customerPhone, gstNumber: customerGst } : null,
+    customer: customerName
+      ? { name: customerName, phone: customerPhone, gstNumber: customerGst, address: customerAddress }
+      : null,
     warehouse: { name: warehouseName, location: warehouseLocation ?? null },
     items: (invoice.items ?? []).map((item: any) => ({
       product: { name: item.product?.name ?? "", sku: item.product?.sku ?? "" },
@@ -711,13 +714,140 @@ interface PdfOp {
   rotateDeg?: number;
 }
 
+interface PdfRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+interface PdfLine {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+}
+
+function approxWidth(text: string, size: number, bold = false): number {
+  return text.length * size * (bold ? 0.56 : 0.5);
+}
+
+function wrapText(text: string, maxChars: number): string[] {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let cur = "";
+  for (const word of words) {
+    const candidate = cur ? `${cur} ${word}` : word;
+    if (candidate.length > maxChars && cur) {
+      lines.push(cur);
+      cur = word;
+    } else {
+      cur = candidate;
+    }
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+const ONES = [
+  "",
+  "One",
+  "Two",
+  "Three",
+  "Four",
+  "Five",
+  "Six",
+  "Seven",
+  "Eight",
+  "Nine",
+  "Ten",
+  "Eleven",
+  "Twelve",
+  "Thirteen",
+  "Fourteen",
+  "Fifteen",
+  "Sixteen",
+  "Seventeen",
+  "Eighteen",
+  "Nineteen",
+];
+const TENS = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+function twoDigitsToWords(n: number): string {
+  if (n < 20) return ONES[n] ?? "";
+  const tens = Math.floor(n / 10);
+  const ones = n % 10;
+  return `${TENS[tens]}${ones ? ` ${ONES[ones]}` : ""}`;
+}
+
+function threeDigitsToWords(n: number): string {
+  const hundred = Math.floor(n / 100);
+  const rest = n % 100;
+  let out = "";
+  if (hundred) out += `${ONES[hundred]} Hundred`;
+  if (rest) out += `${out ? " " : ""}${twoDigitsToWords(rest)}`;
+  return out;
+}
+
+function numberToWordsIndian(num: number): string {
+  if (num === 0) return "Zero";
+  let n = num;
+  const crore = Math.floor(n / 10000000);
+  n %= 10000000;
+  const lakh = Math.floor(n / 100000);
+  n %= 100000;
+  const thousand = Math.floor(n / 1000);
+  n %= 1000;
+  const hundred = n;
+
+  const parts: string[] = [];
+  if (crore) parts.push(`${threeDigitsToWords(crore)} Crore`);
+  if (lakh) parts.push(`${threeDigitsToWords(lakh)} Lakh`);
+  if (thousand) parts.push(`${threeDigitsToWords(thousand)} Thousand`);
+  if (hundred) parts.push(threeDigitsToWords(hundred));
+  return parts.join(" ");
+}
+
+function amountToWords(amount: string): string {
+  const value = Number(amount);
+  const rupees = Math.floor(value);
+  const paise = Math.round((value - rupees) * 100);
+  let words = `Rupees ${numberToWordsIndian(rupees)}`;
+  if (paise > 0) {
+    words += ` and ${numberToWordsIndian(paise)} Paise`;
+  }
+  return `${words} Only`;
+}
+
 function buildInvoicePdf(invoice: InvoicePdfData): Uint8Array {
   const ops: PdfOp[] = [];
+  const rects: PdfRect[] = [];
+  const lines: PdfLine[] = [];
+
+  const addText = (x: number, y: number, size: number, text: string, opts?: { bold?: boolean; color?: [number, number, number] }) => {
+    ops.push({ text, x, y, size, bold: opts?.bold, color: opts?.color });
+  };
+  const addRect = (x: number, y: number, w: number, h: number) => {
+    rects.push({ x, y, w, h });
+  };
+  const addLine = (x1: number, y1: number, x2: number, y2: number) => {
+    lines.push({ x1, y1, x2, y2 });
+  };
+  const centerX = (text: string, size: number, bold: boolean, within: [number, number]): number => {
+    const w = approxWidth(text, size, bold);
+    return within[0] + (within[1] - within[0] - w) / 2;
+  };
+
   const companyName = process.env["COMPANY_NAME"] ?? "Company Name";
   const companyAddress = process.env["COMPANY_ADDRESS"] ?? "";
   const companyGst = process.env["COMPANY_GST_NUMBER"] ?? "";
+  const companyState = process.env["COMPANY_STATE"] ?? "";
+  const companyEmail = process.env["COMPANY_EMAIL"] ?? "";
 
-  let y = 800;
+  const L = 36;
+  const R = 559;
+  const W = R - L;
+  const midX = L + 300;
 
   if (invoice.status !== "paid") {
     ops.push({
@@ -731,104 +861,206 @@ function buildInvoicePdf(invoice: InvoicePdfData): Uint8Array {
     });
   }
 
-  ops.push({ text: companyName, x: 40, y, size: 18, bold: true });
-  y -= 16;
-  if (companyAddress) {
-    ops.push({ text: companyAddress, x: 40, y, size: 9, color: [0.33, 0.33, 0.33] });
-    y -= 12;
+  // Title
+  addText(centerX("TAX INVOICE", 14, true, [L, R]), 812, 14, "TAX INVOICE", { bold: true });
+  let y = 796;
+
+  // Company / invoice-meta header box
+  const headerBoxTop = y;
+  const headerBoxHeight = 76;
+  const headerBoxBottom = headerBoxTop - headerBoxHeight;
+  addRect(L, headerBoxBottom, W, headerBoxHeight);
+  addLine(midX, headerBoxTop, midX, headerBoxBottom);
+
+  let cy = headerBoxTop - 14;
+  addText(L + 8, cy, 11, companyName, { bold: true });
+  cy -= 13;
+  for (const line of wrapText(companyAddress, 48).slice(0, 2)) {
+    addText(L + 8, cy, 8, line);
+    cy -= 11;
   }
   if (companyGst) {
-    ops.push({ text: `GSTIN: ${companyGst}`, x: 40, y, size: 9, color: [0.33, 0.33, 0.33] });
-    y -= 12;
+    addText(L + 8, cy, 8, `GSTIN/UIN: ${companyGst}`);
+    cy -= 11;
+  }
+  if (companyState) {
+    addText(L + 8, cy, 8, `State Name: ${companyState}`);
+    cy -= 11;
+  }
+  if (companyEmail) {
+    addText(L + 8, cy, 8, `E-Mail: ${companyEmail}`);
+    cy -= 11;
   }
 
-  y = 800;
-  ops.push({ text: `Invoice ${invoice.invoiceNumber}`, x: 380, y, size: 14, bold: true });
-  y -= 16;
-  if (invoice.status !== "paid") {
-    ops.push({ text: `STATUS: ${invoice.status.toUpperCase()}`, x: 380, y, size: 11, color: [0.88, 0.11, 0.28] });
-    y -= 14;
+  const metaRows: Array<[string, string]> = [
+    ["Invoice No.", invoice.invoiceNumber],
+    ["Dated", invoice.createdAt.toLocaleDateString()],
+    ["Payment Mode", invoice.paymentMode.toUpperCase()],
+    ["Place of Supply", invoice.warehouse.name + (invoice.warehouse.location ? ` (${invoice.warehouse.location})` : "")],
+  ];
+  let ry = headerBoxTop - 14;
+  for (const [label, val] of metaRows) {
+    addText(midX + 8, ry, 8, `${label}:`, { bold: true });
+    addText(midX + 8 + approxWidth(`${label}: `, 8, true), ry, 8, val);
+    ry -= 12;
   }
-  ops.push({ text: `Date: ${invoice.createdAt.toLocaleString()}`, x: 380, y, size: 9 });
-  y -= 12;
-  ops.push({ text: `Payment mode: ${invoice.paymentMode.toUpperCase()}`, x: 380, y, size: 9 });
-  y -= 12;
-  ops.push({
-    text: `Billed from: ${invoice.warehouse.name}${invoice.warehouse.location ? ` (${invoice.warehouse.location})` : ""}`,
-    x: 380,
-    y,
-    size: 9,
-  });
 
-  y = 745;
+  y = headerBoxBottom;
+
+  // Buyer box
+  const buyerLines: string[] = [];
   if (invoice.customer) {
-    ops.push({ text: "Bill To:", x: 40, y, size: 10, bold: true });
-    y -= 12;
-    ops.push({ text: invoice.customer.name, x: 40, y, size: 9 });
-    y -= 12;
-    if (invoice.customer.phone) {
-      ops.push({ text: invoice.customer.phone, x: 40, y, size: 9 });
-      y -= 12;
+    buyerLines.push(invoice.customer.name);
+    if (invoice.customer.address) {
+      for (const l of wrapText(invoice.customer.address, 70).slice(0, 2)) buyerLines.push(l);
     }
-    if (invoice.customer.gstNumber) {
-      ops.push({ text: `GSTIN: ${invoice.customer.gstNumber}`, x: 40, y, size: 9 });
-      y -= 12;
-    }
+    if (invoice.customer.phone) buyerLines.push(`Phone: ${invoice.customer.phone}`);
+    if (invoice.customer.gstNumber) buyerLines.push(`GSTIN/UIN: ${invoice.customer.gstNumber}`);
+  } else {
+    buyerLines.push("Cash Sale");
   }
+  const buyerBoxTop = y;
+  const buyerBoxHeight = 16 + buyerLines.length * 11 + 6;
+  addRect(L, buyerBoxTop - buyerBoxHeight, W, buyerBoxHeight);
+  let by = buyerBoxTop - 13;
+  addText(L + 8, by, 8, "Buyer (Bill to)", { bold: true });
+  by -= 12;
+  for (const line of buyerLines) {
+    addText(L + 8, by, 9, line);
+    by -= 11;
+  }
+  y = buyerBoxTop - buyerBoxHeight;
 
-  y -= 8;
+  // Items table
   const columns = [
-    { label: "Product", x: 40 },
-    { label: "Qty", x: 220 },
-    { label: "MRP", x: 260 },
-    { label: "Price", x: 310 },
-    { label: "Disc.", x: 360 },
-    { label: "Tax", x: 410 },
-    { label: "Total", x: 460 },
+    { x0: L, x1: L + 34, align: "center" as const, label: "SI No." },
+    { x0: L + 34, x1: L + 304, align: "left" as const, label: "Description of Goods" },
+    { x0: L + 304, x1: L + 354, align: "center" as const, label: "Qty" },
+    { x0: L + 354, x1: L + 434, align: "right" as const, label: "Rate" },
+    { x0: L + 434, x1: R, align: "right" as const, label: "Amount" },
   ];
-  for (const col of columns) ops.push({ text: col.label, x: col.x, y, size: 9, bold: true });
-  y -= 16;
+  const tableTop = y;
+  let cursorY = tableTop;
 
+  addRect(L, cursorY - 18, W, 18);
+  for (const col of columns) {
+    let tx: number;
+    if (col.align === "left") tx = col.x0 + 4;
+    else if (col.align === "center") tx = col.x0 + (col.x1 - col.x0) / 2 - approxWidth(col.label, 8, true) / 2;
+    else tx = col.x1 - 4 - approxWidth(col.label, 8, true);
+    addText(tx, cursorY - 13, 8, col.label, { bold: true });
+  }
+  cursorY -= 18;
+
+  let si = 1;
   for (const item of invoice.items) {
-    const row = [
-      `${item.product.name} (${item.product.sku})`,
-      String(item.qty),
-      item.mrp,
-      item.price,
-      item.discount,
-      item.taxAmount,
-      item.lineTotal,
-    ];
-    row.forEach((value, i) => {
-      ops.push({ text: value, x: columns[i]!.x, y, size: 9 });
-    });
-    y -= 16;
+    const descText = `${item.product.name} (${item.product.sku})`;
+    const descLines = wrapText(descText, 44).slice(0, 2);
+    const rh = Math.max(16, descLines.length * 10 + 8);
+    addRect(L, cursorY - rh, W, rh);
+
+    const siStr = String(si);
+    addText(columns[0]!.x0 + (columns[0]!.x1 - columns[0]!.x0) / 2 - approxWidth(siStr, 8) / 2, cursorY - 12, 8, siStr);
+
+    let dy = cursorY - 11;
+    for (const dl of descLines) {
+      addText(columns[1]!.x0 + 4, dy, 8, dl);
+      dy -= 10;
+    }
+
+    const qtyStr = String(item.qty);
+    addText(columns[2]!.x0 + (columns[2]!.x1 - columns[2]!.x0) / 2 - approxWidth(qtyStr, 8) / 2, cursorY - 12, 8, qtyStr);
+    addText(columns[3]!.x1 - 4 - approxWidth(item.price, 8), cursorY - 12, 8, item.price);
+    addText(columns[4]!.x1 - 4 - approxWidth(item.lineTotal, 8), cursorY - 12, 8, item.lineTotal);
+
+    cursorY -= rh;
+    si += 1;
   }
 
-  y -= 8;
-  const totals: Array<[string, string]> = [
-    ["Subtotal", invoice.subtotal],
-    ["Tax", invoice.taxAmount],
-  ];
+  const tableBottom = cursorY;
+  for (const bx of [columns[1]!.x0, columns[2]!.x0, columns[3]!.x0, columns[4]!.x0]) {
+    addLine(bx, tableTop, bx, tableBottom);
+  }
+  y = tableBottom - 4;
+
+  // Totals box
+  const totalsRows: Array<[string, string, boolean]> = [["Subtotal", invoice.subtotal, false]];
+  if (Number(invoice.taxAmount) > 0) {
+    const half = (Number(invoice.taxAmount) / 2).toFixed(2);
+    totalsRows.push(["CGST", half, false]);
+    totalsRows.push(["SGST", half, false]);
+  }
   if (invoice.couponCode && invoice.couponDiscountAmount && Number(invoice.couponDiscountAmount) > 0) {
-    totals.push([`Coupon (${invoice.couponCode}, ${invoice.couponDiscountPercent}%)`, `-${invoice.couponDiscountAmount}`]);
+    totalsRows.push([`Coupon (${invoice.couponCode})`, `-${invoice.couponDiscountAmount}`, false]);
   }
   if (invoice.packagingCharge && Number(invoice.packagingCharge) > 0) {
-    totals.push(["Packaging Charges", invoice.packagingCharge]);
+    totalsRows.push(["Packaging Charges", invoice.packagingCharge, false]);
   }
   if (invoice.transportCharge && Number(invoice.transportCharge) > 0) {
-    totals.push(["Transport Charges", invoice.transportCharge]);
+    totalsRows.push(["Transport Charges", invoice.transportCharge, false]);
   }
-  for (const [label, value] of totals) {
-    ops.push({ text: label, x: 350, y, size: 9 });
-    ops.push({ text: value, x: 460, y, size: 9 });
-    y -= 14;
+  totalsRows.push(["Grand Total", invoice.grandTotal, true]);
+
+  const totalsBoxLeft = midX;
+  const totalsBoxWidth = R - totalsBoxLeft;
+  const totalsRowH = 15;
+  const totalsBoxTop = y;
+  const totalsBoxHeight = totalsRows.length * totalsRowH;
+  addRect(totalsBoxLeft, totalsBoxTop - totalsBoxHeight, totalsBoxWidth, totalsBoxHeight);
+  const totalsDividerX = R - 90;
+  addLine(totalsDividerX, totalsBoxTop, totalsDividerX, totalsBoxTop - totalsBoxHeight);
+  let tRowY = totalsBoxTop;
+  for (const [label, val, bold] of totalsRows) {
+    if (tRowY !== totalsBoxTop) addLine(totalsBoxLeft, tRowY, R, tRowY);
+    const size = bold ? 10 : 9;
+    addText(totalsBoxLeft + 6, tRowY - 11, size, label, { bold });
+    addText(R - 6 - approxWidth(val, size, bold), tRowY - 11, size, val, { bold });
+    tRowY -= totalsRowH;
   }
-  ops.push({ text: "Grand Total", x: 350, y, size: 11, bold: true });
-  ops.push({ text: invoice.grandTotal, x: 460, y, size: 11, bold: true });
+  y = totalsBoxTop - totalsBoxHeight - 10;
+
+  // Amount in words
+  addText(L, y, 8, "Amount Chargeable (in words)", { bold: true });
+  y -= 11;
+  for (const wl of wrapText(`INR ${amountToWords(invoice.grandTotal)}`, 90).slice(0, 2)) {
+    addText(L, y, 9, wl);
+    y -= 12;
+  }
+
+  // Tax amount in words
+  y -= 4;
+  addText(L, y, 8, "Tax Amount (in words)", { bold: true });
+  y -= 11;
+  addText(L, y, 9, `INR ${amountToWords(invoice.taxAmount)}`);
+  y -= 20;
+
+  // Declaration + signature block
+  const sigBlockTop = y;
+  addText(L, y, 8, "Declaration", { bold: true });
+  y -= 11;
+  const declaration =
+    "We declare that this invoice shows the actual price of the goods described and that all particulars are true and correct.";
+  for (const dl of wrapText(declaration, 58)) {
+    addText(L, y, 8, dl);
+    y -= 10;
+  }
+
+  addText(R - approxWidth(`for ${companyName}`, 9, true), sigBlockTop, 9, `for ${companyName}`, { bold: true });
+  addText(R - approxWidth("Authorised Signatory", 8, false), sigBlockTop - 45, 8, "Authorised Signatory");
+
+  // Footer
+  const footerText = "This is a Computer Generated Invoice";
+  addText(centerX(footerText, 8, false, [L, R]), 28, 8, footerText, { color: [0.4, 0.4, 0.4] });
 
   // Build content stream.
   let content = "";
+  content += "0 0 0 RG\n0.6 w\n";
+  for (const rect of rects) {
+    content += `${rect.x} ${rect.y} ${rect.w} ${rect.h} re S\n`;
+  }
+  for (const line of lines) {
+    content += `${line.x1} ${line.y1} m ${line.x2} ${line.y2} l S\n`;
+  }
   for (const op of ops) {
     const size = op.size;
     const font = op.bold ? "/F2" : "/F1";
