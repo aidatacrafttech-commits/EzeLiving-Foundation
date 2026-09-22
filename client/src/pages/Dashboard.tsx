@@ -17,13 +17,7 @@ import {
 import { api } from "../api/client";
 import type { DamagedStockRow, DamageSource, LowStockRow, SalesSummary } from "../types";
 
-const WAREHOUSE_COLORS = [
-  "var(--brand-500)",
-  "var(--success-dark)",
-  "var(--warning-dark)",
-  "var(--info-dark)",
-  "var(--accent-purple)",
-];
+const WAREHOUSE_COLORS = ["var(--brand-400)", "var(--success)", "var(--warning)", "var(--info)", "var(--accent-purple)"];
 
 function ProductQtyTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { name: string; sku: string; qty: number } }> }) {
   if (!active || !payload?.length) return null;
@@ -34,7 +28,7 @@ function ProductQtyTooltip({ active, payload }: { active?: boolean; payload?: Ar
         {row.name} <span className="muted small">({row.sku})</span>
       </div>
       <div className="chart-tooltip-row">
-        <span className="chart-tooltip-dot" style={{ background: "var(--brand-500)" }} />
+        <span className="chart-tooltip-dot" style={{ background: "var(--brand-400)" }} />
         {row.qty} sold
       </div>
     </div>
@@ -180,7 +174,7 @@ export function Dashboard() {
                     tickFormatter={(name: string) => (name.length > 18 ? `${name.slice(0, 17)}…` : name)}
                   />
                   <Tooltip content={<ProductQtyTooltip />} cursor={{ fill: "var(--chip-bg)" }} />
-                  <Bar dataKey="qty" fill="var(--brand-500)" radius={[0, 4, 4, 0]} barSize={18} />
+                  <Bar dataKey="qty" fill="var(--brand-400)" radius={[0, 4, 4, 0]} barSize={18} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

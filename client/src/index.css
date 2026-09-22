@@ -1900,39 +1900,34 @@ tr.current-warehouse:hover {
 }
 
 .stat-card .stat-icon {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
   flex-shrink: 0;
-  border-radius: 14px;
+  border-radius: 13px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-sm);
 }
 
-/* KPI Icon Variants — muted, single accent hue per card, not neon */
+/* KPI Icon Variants — soft pastel badge + mid-tone glyph, no gradients */
 .stat-card.stat-sales-today .stat-icon {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  box-shadow: 0 6px 14px -4px rgba(16, 185, 129, 0.28);
+  background: var(--success-bg);
+  color: var(--success-dark);
 }
 
 .stat-card.stat-sales-month .stat-icon {
-  background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-700) 100%);
-  color: white;
-  box-shadow: 0 6px 14px -4px rgba(var(--brand-rgb), 0.28);
+  background: var(--brand-50);
+  color: var(--brand-600);
 }
 
 .stat-card.stat-low-stock .stat-icon {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-  color: white;
-  box-shadow: 0 6px 14px -4px rgba(245, 158, 11, 0.28);
+  background: var(--warning-bg);
+  color: var(--warning-dark);
 }
 
 .stat-card.stat-damaged .stat-icon {
-  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
-  color: white;
-  box-shadow: 0 6px 14px -4px rgba(244, 63, 94, 0.28);
+  background: var(--danger-bg);
+  color: var(--danger-dark);
 }
 
 .stat-card > div {
