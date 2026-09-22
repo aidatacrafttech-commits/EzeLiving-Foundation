@@ -137,7 +137,7 @@ export function AdminStaff() {
         </h3>
         <div className="form-grid">
           <label>
-            Name
+            Name<span className="required-star">*</span>
             <input
               value={createForm.name}
               onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
@@ -145,7 +145,7 @@ export function AdminStaff() {
             />
           </label>
           <label>
-            Email
+            Email<span className="required-star">*</span>
             <input
               type="email"
               value={createForm.email}
@@ -154,7 +154,7 @@ export function AdminStaff() {
             />
           </label>
           <label>
-            Temporary password
+            Temporary password<span className="required-star">*</span>
             <input
               type="text"
               minLength={6}
@@ -190,11 +190,11 @@ export function AdminStaff() {
           </h3>
           <div className="form-grid">
             <label>
-              Name
+              Name<span className="required-star">*</span>
               <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} required />
             </label>
             <label>
-              Email
+              Email<span className="required-star">*</span>
               <input
                 type="email"
                 value={editForm.email}
@@ -214,7 +214,7 @@ export function AdminStaff() {
               </select>
             </label>
             <label>
-              New password (optional)
+              New password
               <input
                 type="text"
                 minLength={6}

@@ -561,7 +561,7 @@ export function AdminProducts() {
 
             <div className="form-grid">
               <label>
-                How many new barcodes?
+                How many new barcodes?<span className="required-star">*</span>
                 <input
                   type="number"
                   min={1}
@@ -652,11 +652,11 @@ export function AdminProducts() {
         </h3>
         <div className="form-grid">
           <label>
-            Name
+            Name<span className="required-star">*</span>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           </label>
           <label>
-            SKU
+            SKU<span className="required-star">*</span>
             <input
               value={form.sku}
               onChange={(e) => setForm({ ...form, sku: e.target.value })}
@@ -665,7 +665,7 @@ export function AdminProducts() {
             />
           </label>
           <label>
-            Barcode
+            Barcode<span className="required-star">*</span>
             <input
               value={form.barcode}
               onChange={(e) => setForm({ ...form, barcode: e.target.value })}
@@ -682,7 +682,7 @@ export function AdminProducts() {
             <input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
           </label>
           <label>
-            MRP
+            MRP<span className="required-star">*</span>
             <input
               type="number"
               min={0}
@@ -692,7 +692,7 @@ export function AdminProducts() {
             />
           </label>
           <label>
-            Selling price
+            Selling price<span className="required-star">*</span>
             <input
               type="number"
               min={0}
@@ -833,13 +833,21 @@ export function AdminProducts() {
           <table className="cart-table bulk-table">
             <thead>
               <tr>
-                <th>Name *</th>
+                <th>
+                  Name<span className="required-star">*</span>
+                </th>
                 <th>SKU</th>
-                <th>Barcode *</th>
+                <th>
+                  Barcode<span className="required-star">*</span>
+                </th>
                 <th>Category</th>
                 <th>Brand</th>
-                <th>MRP *</th>
-                <th>Price *</th>
+                <th>
+                  MRP<span className="required-star">*</span>
+                </th>
+                <th>
+                  Price<span className="required-star">*</span>
+                </th>
                 <th>Tax %</th>
                 <th>Unit</th>
                 <th>Image</th>

@@ -363,6 +363,17 @@ label {
   letter-spacing: 0.03em;
 }
 
+.required-star {
+  display: inline-block;
+  position: relative;
+  top: -6px;
+  margin-left: 2px;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 0;
+}
+
 .muted {
   color: var(--muted);
   font-weight: 400;

@@ -299,7 +299,7 @@ export function Billing() {
             <ScanLine size={19} /> Scan &amp; Lookup
           </h2>
           <label className="warehouse-select">
-            Billing counter
+            Billing counter<span className="required-star">*</span>
             <select
               value={cart.warehouseId ?? ""}
               onChange={(e) => cart.setWarehouseId(Number(e.target.value))}
@@ -370,7 +370,7 @@ export function Billing() {
         <CartTable />
 
         <div className="customer-picker">
-          <h3>Customer (optional)</h3>
+          <h3>Customer</h3>
           {selectedCustomer ? (
             <div className="selected-customer">
               {selectedCustomer.name} {selectedCustomer.phone ? `(${selectedCustomer.phone})` : ""}
@@ -392,7 +392,7 @@ export function Billing() {
               />
               <input
                 type="email"
-                placeholder="Email (optional)"
+                placeholder="Email"
                 value={newCustomerEmail}
                 onChange={(e) => setNewCustomerEmail(e.target.value)}
               />
@@ -475,7 +475,7 @@ export function Billing() {
 
         <div className="charges-section">
           <h3>
-            <Package size={14} /> Additional charges (optional)
+            <Package size={14} /> Additional charges
           </h3>
           <div className="charges-inputs">
             <label>

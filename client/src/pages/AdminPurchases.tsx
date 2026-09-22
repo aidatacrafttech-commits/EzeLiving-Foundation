@@ -289,7 +289,7 @@ export function AdminPurchases() {
 
   const supplierPicker = (
     <>
-      <h4>Supplier (optional)</h4>
+      <h4>Supplier</h4>
       {selectedSupplier ? (
         <div className="selected-customer">
           {selectedSupplier.name} {selectedSupplier.phone ? `(${selectedSupplier.phone})` : ""}
@@ -541,7 +541,7 @@ export function AdminPurchases() {
 
           <div className="form-grid">
             <label>
-              Warehouse
+              Warehouse<span className="required-star">*</span>
               <select
                 value={warehouseId}
                 onChange={(e) => {

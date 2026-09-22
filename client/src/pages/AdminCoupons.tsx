@@ -93,7 +93,7 @@ export function AdminCoupons() {
         <h3>Add new coupon</h3>
         <div className="form-grid">
           <label>
-            Coupon code
+            Coupon code<span className="required-star">*</span>
             <input
               placeholder="e.g. DISCOUNT10 or vivek10"
               value={form.code}
@@ -102,7 +102,7 @@ export function AdminCoupons() {
             />
           </label>
           <label>
-            Discount %
+            Discount %<span className="required-star">*</span>
             <input
               type="number"
               min={1}
@@ -139,7 +139,7 @@ export function AdminCoupons() {
           </h3>
           <div className="form-grid">
             <label>
-              Discount %
+              Discount %<span className="required-star">*</span>
               <input
                 type="number"
                 min={1}

@@ -39,11 +39,11 @@ export function Login() {
           </p>
         </div>
         <label>
-          Email
+          Email<span className="required-star">*</span>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </label>
         <label>
-          Password
+          Password<span className="required-star">*</span>
           <div className="password-field">
             <input
               type={showPassword ? "text" : "password"}
