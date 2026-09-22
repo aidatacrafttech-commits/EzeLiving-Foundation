@@ -1,8 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, CalendarDays, LayoutDashboard, PackageX, Receipt, Truck, TrendingUp } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { api } from "../api/client";
 import type { DamagedStockRow, DamageSource, LowStockRow, SalesSummary } from "../types";
+
+const WAREHOUSE_COLORS = ["#96162f", "#059669", "#d97706", "#2563eb", "#7c3aed"];
 
 const DAMAGE_SOURCE_LABEL: Record<DamageSource, string> = {
   transit: "Damage on Transit",
@@ -105,31 +119,32 @@ export function Dashboard() {
               No sales yet this month.
             </p>
           ) : (
-            (() => {
-              const maxQty = Math.max(...summary.topProducts.map((p) => p.qtySold), 1);
-              return (
-                <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 12 }}>
-                  {summary.topProducts.map((p) => (
-                    <div key={p.productId} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontWeight: 600, fontSize: "13.5px" }}>
-                          {p.productName} <span className="muted small">({p.sku})</span>
-                        </span>
-                        <span className="num" style={{ fontWeight: 700, color: "var(--brand-700)" }}>
-                          {p.qtySold} sold
-                        </span>
-                      </div>
-                      <div className="dashboard-progress-track">
-                        <div
-                          className="dashboard-progress-fill"
-                          style={{ width: `${Math.round((p.qtySold / maxQty) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              );
-            })()
+            <div style={{ width: "100%", height: Math.max(180, summary.topProducts.length * 40) }}>
+              <ResponsiveContainer>
+                <BarChart
+                  data={summary.topProducts.map((p) => ({ name: p.productName, sku: p.sku, qty: p.qtySold }))}
+                  layout="vertical"
+                  margin={{ top: 4, right: 24, bottom: 4, left: 4 }}
+                >
+                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <YAxis
+                    type="category"
+                    dataKey="name"
+                    width={140}
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(name: string) => (name.length > 18 ? `${name.slice(0, 17)}…` : name)}
+                  />
+                  <Tooltip
+                    formatter={(value: number) => [`${value} sold`, "Qty"]}
+                    labelFormatter={(_label, payload) => {
+                      const row = payload?.[0]?.payload as { name: string; sku: string } | undefined;
+                      return row ? `${row.name} (${row.sku})` : "";
+                    }}
+                  />
+                  <Bar dataKey="qty" fill="#96162f" radius={[0, 4, 4, 0]} barSize={18} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           )}
         </div>
 
@@ -140,32 +155,26 @@ export function Dashboard() {
               No sales yet this month.
             </p>
           ) : (
-            (() => {
-              const maxSales = Math.max(...summary.salesByWarehouse.map((w) => Number(w.totalSales)), 1);
-              return (
-                <div style={{ display: "flex", flexDirection: "column", gap: 14, marginTop: 12 }}>
-                  {summary.salesByWarehouse.map((w) => {
-                    const salesVal = Number(w.totalSales);
-                    return (
-                      <div key={w.warehouseId} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontWeight: 600, fontSize: "13.5px" }}>{w.warehouseName}</span>
-                          <span className="num" style={{ fontWeight: 700, color: "var(--success-dark)" }}>
-                            ₹{salesVal.toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="dashboard-progress-track">
-                          <div
-                            className="dashboard-progress-fill success"
-                            style={{ width: `${Math.round((salesVal / maxSales) * 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()
+            <div style={{ width: "100%", height: 260 }}>
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie
+                    data={summary.salesByWarehouse.map((w) => ({ name: w.warehouseName, value: Number(w.totalSales) }))}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={55}
+                    outerRadius={85}
+                    paddingAngle={2}
+                  >
+                    {summary.salesByWarehouse.map((w, i) => (
+                      <Cell key={w.warehouseId} fill={WAREHOUSE_COLORS[i % WAREHOUSE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number) => [`₹${value.toFixed(2)}`, "Sales"]} />
+                  <Legend verticalAlign="bottom" height={32} wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
           )}
         </div>
       </div>
