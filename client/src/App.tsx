@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Login } from "./pages/Login";
+import { RemoteScan } from "./pages/RemoteScan";
 import { Billing } from "./pages/Billing";
 import { InvoiceDetail } from "./pages/InvoiceDetail";
 import { InvoiceHistory } from "./pages/InvoiceHistory";
@@ -22,6 +23,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/remote-scan/:sessionId" element={<RemoteScan />} />
       <Route
         element={
           <ProtectedRoute>
