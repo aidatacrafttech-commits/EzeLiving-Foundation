@@ -374,6 +374,32 @@ label {
   line-height: 0;
 }
 
+/* For a mandatory field that has no visible <label> text (placeholder-only
+   inputs) — anchors the star to the input's own top-right corner instead. */
+.field-with-star {
+  position: relative;
+  display: inline-flex;
+  flex: 1 1 120px;
+  min-width: 0;
+}
+
+.field-with-star input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.field-with-star .required-corner-star {
+  position: absolute;
+  top: -6px;
+  right: 6px;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+}
+
 .muted {
   color: var(--muted);
   font-weight: 400;

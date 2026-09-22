@@ -299,7 +299,12 @@ export function AdminPurchases() {
         </div>
       ) : newSupplierMode ? (
         <div className="new-customer-form">
-          <input placeholder="Name" value={newSupplierName} onChange={(e) => setNewSupplierName(e.target.value)} />
+          <span className="field-with-star">
+            <input placeholder="Name" value={newSupplierName} onChange={(e) => setNewSupplierName(e.target.value)} />
+            <span className="required-corner-star" aria-hidden="true">
+              *
+            </span>
+          </span>
           <input placeholder="Phone" value={newSupplierPhone} onChange={(e) => setNewSupplierPhone(e.target.value)} />
           <button type="button" disabled={!newSupplierName.trim()} onClick={createNewSupplier}>
             Save supplier
@@ -413,7 +418,9 @@ export function AdminPurchases() {
                 <thead>
                   <tr>
                     <th>Product</th>
-                    <th>Total received (good)</th>
+                    <th>
+                      Total received (good)<span className="required-star">*</span>
+                    </th>
                     <th>Damaged (transit)</th>
                     <th>Selling price</th>
                     {warehouses.map((w) => (

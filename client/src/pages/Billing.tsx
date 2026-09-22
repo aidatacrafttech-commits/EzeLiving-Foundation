@@ -380,11 +380,16 @@ export function Billing() {
             </div>
           ) : newCustomerMode ? (
             <div className="new-customer-form">
-              <input
-                placeholder="Name"
-                value={newCustomerName}
-                onChange={(e) => setNewCustomerName(e.target.value)}
-              />
+              <span className="field-with-star">
+                <input
+                  placeholder="Name"
+                  value={newCustomerName}
+                  onChange={(e) => setNewCustomerName(e.target.value)}
+                />
+                <span className="required-corner-star" aria-hidden="true">
+                  *
+                </span>
+              </span>
               <input
                 placeholder="Phone (WhatsApp)"
                 value={newCustomerPhone}
