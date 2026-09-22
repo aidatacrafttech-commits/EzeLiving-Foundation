@@ -16,12 +16,24 @@ export function RemoteScan() {
 
   useEffect(() => {
     if (!sessionId) return;
-    const channel = openScanChannel(sessionId);
-    channel.subscribe();
-    channelRef.current = channel;
+    let cancelled = false;
+    openScanChannel(sessionId).then((channel) => {
+      // The effect's own cleanup can fire before this promise resolves
+      // (fast unmount, or React Strict Mode's double-invoke) — don't leave
+      // a channel open that nothing will ever close.
+      if (cancelled) {
+        closeScanChannel(channel);
+        return;
+      }
+      channel.subscribe();
+      channelRef.current = channel;
+    });
     return () => {
-      closeScanChannel(channel);
-      channelRef.current = null;
+      cancelled = true;
+      if (channelRef.current) {
+        closeScanChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [sessionId]);
 

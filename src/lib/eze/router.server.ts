@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import { ApiError, readUser, type Ctx, type RouteDef } from "./core.server";
 import { authRoutes } from "./auth.server";
 import { catalogRoutes } from "./catalog.server";
+import { configRoutes } from "./config.server";
 import { productRoutes } from "./products.server";
 import { stockRoutes } from "./stock.server";
 import { invoiceRoutes } from "./invoices.server";
@@ -12,6 +13,7 @@ import { purchaseRoutes } from "./purchases.server";
 const routes: RouteDef[] = [
   ...authRoutes,
   ...catalogRoutes,
+  ...configRoutes,
   ...productRoutes,
   ...stockRoutes,
   ...invoiceRoutes,

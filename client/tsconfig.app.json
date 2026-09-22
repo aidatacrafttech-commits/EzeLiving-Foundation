@@ -16,11 +16,6 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Matches the root TanStack app's "@/*" -> "src/*" alias, so files this
-       app is embedded into (see EmbeddedApp.tsx / the "@/integrations/..."
-       Supabase client) resolve the same way here in a standalone build. */
-    "paths": { "@/*": ["../src/*"] },
-
     /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,

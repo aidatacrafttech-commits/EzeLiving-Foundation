@@ -143,7 +143,7 @@ export function Billing() {
     const remoteUrl = `${window.location.origin}/remote-scan/${sessionId}`;
     const qrDataUrl = await QRCode.toDataURL(remoteUrl, { margin: 1, width: 200 });
 
-    const channel = openScanChannel(sessionId);
+    const channel = await openScanChannel(sessionId);
     onScanBroadcast(channel, (barcode) => {
       setLastRemoteScan(barcode);
       handleScan(barcode);
