@@ -1,38 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, LayoutDashboard, PackageX, Truck } from "lucide-react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { api } from "../api/client";
 import type { DamagedStockRow, DamageSource, LowStockRow, SalesSummary } from "../types";
 
 const WAREHOUSE_COLORS = ["var(--brand-400)", "var(--success)", "var(--warning)", "var(--info)", "var(--accent-purple)"];
-
-function ProductQtyTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { name: string; sku: string; qty: number } }> }) {
-  if (!active || !payload?.length) return null;
-  const row = payload[0]!.payload;
-  return (
-    <div className="chart-tooltip">
-      <div className="chart-tooltip-label">
-        {row.name} <span className="muted small">({row.sku})</span>
-      </div>
-      <div className="chart-tooltip-row">
-        <span className="chart-tooltip-dot" style={{ background: "var(--brand-400)" }} />
-        {row.qty} sold
-      </div>
-    </div>
-  );
-}
+const RANK_COLORS = ["var(--brand-500)", "var(--brand-400)", "var(--brand-300)", "var(--brand-200)", "var(--brand-200)"];
 
 function WarehouseSalesTooltip({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number; color?: string }> }) {
   if (!active || !payload?.length) return null;
@@ -122,46 +96,46 @@ export function Dashboard() {
 
       <div className="dashboard-grid">
         <div className="dashboard-panel">
-          <h3>Top Selling Products (this month)</h3>
+          <div className="chart-panel-head">
+            <div>
+              <h3>Top Selling Products</h3>
+              <p className="chart-panel-subtitle">This month's best-performing products</p>
+            </div>
+            <span className="chart-period-badge">This Month</span>
+          </div>
           {summary.topProducts.length === 0 ? (
             <p className="muted" style={{ padding: "16px 0", textAlign: "center" }}>
               No sales yet this month.
             </p>
           ) : (
-            <div style={{ width: "100%", height: Math.max(180, summary.topProducts.length * 40) }}>
-              <ResponsiveContainer>
-                <BarChart
-                  data={summary.topProducts.map((p) => ({ name: p.productName, sku: p.sku, qty: p.qtySold }))}
-                  layout="vertical"
-                  margin={{ top: 4, right: 24, bottom: 4, left: 4 }}
-                >
-                  <defs>
-                    <linearGradient id="topProductsBarFill" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="var(--brand-300)" />
-                      <stop offset="100%" stopColor="var(--brand-500)" />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid horizontal={false} stroke="var(--border)" strokeDasharray="3 3" />
-                  <XAxis
-                    type="number"
-                    allowDecimals={false}
-                    tick={{ fontSize: 11, fill: "var(--muted)" }}
-                    axisLine={{ stroke: "var(--border)" }}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
-                    width={140}
-                    tick={{ fontSize: 12, fill: "var(--text-soft)" }}
-                    axisLine={{ stroke: "var(--border)" }}
-                    tickLine={false}
-                    tickFormatter={(name: string) => (name.length > 18 ? `${name.slice(0, 17)}…` : name)}
-                  />
-                  <Tooltip content={<ProductQtyTooltip />} cursor={{ fill: "var(--chip-bg)" }} />
-                  <Bar dataKey="qty" fill="url(#topProductsBarFill)" radius={[0, 4, 4, 0]} barSize={18} />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="ranked-bar-list">
+              {summary.topProducts.map((p, i) => {
+                const maxQty = summary.topProducts[0]!.qtySold;
+                const pct = maxQty > 0 ? Math.max(4, Math.round((p.qtySold / maxQty) * 100)) : 0;
+                const isTop = i === 0;
+                const color = RANK_COLORS[i % RANK_COLORS.length];
+                return (
+                  <div key={p.productId} className={`ranked-bar-row${isTop ? " is-top" : ""}`}>
+                    <span className="ranked-bar-rank">{i + 1}</span>
+                    <div className="ranked-bar-main">
+                      <span className="ranked-bar-name">{p.productName}</span>
+                      <div className="ranked-bar-track-row">
+                        <div className="ranked-bar-track">
+                          <div className="ranked-bar-fill" style={{ width: `${pct}%`, background: color }} />
+                        </div>
+                        <span className="ranked-bar-value">{p.qtySold}</span>
+                      </div>
+                    </div>
+                    <div className="ranked-bar-tooltip chart-tooltip">
+                      <div className="chart-tooltip-label">{p.productName}</div>
+                      <div className="chart-tooltip-row">
+                        <span className="chart-tooltip-dot" style={{ background: color }} />
+                        {p.sku} · {p.qtySold} unit{p.qtySold === 1 ? "" : "s"} sold
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

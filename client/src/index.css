@@ -2003,6 +2003,162 @@ tr.current-warehouse:hover {
   font-weight: 800;
 }
 
+/* Dashboard chart-panel header — title/subtitle + optional period badge */
+.chart-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.chart-panel-head h3 {
+  margin-bottom: 2px;
+}
+
+.chart-panel-subtitle {
+  font-size: 12.5px;
+  color: var(--muted);
+  font-weight: 500;
+  margin: 0;
+}
+
+.chart-period-badge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-soft);
+  background: var(--chip-bg);
+  border: 1px solid var(--border-soft);
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Top Selling Products — ranked bar list (a leaderboard-style widget, the
+   pattern modern SaaS dashboards use for "Top N" data instead of forcing a
+   category axis to render full, unwrapped product names). */
+.ranked-bar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.ranked-bar-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.ranked-bar-row.is-top {
+  background: var(--brand-50);
+  border-radius: var(--radius-sm);
+  padding: 9px 10px;
+  margin: -9px -10px 9px;
+}
+
+.ranked-bar-rank {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: var(--font-display);
+  background: var(--chip-bg-strong);
+  color: var(--text-soft);
+}
+
+.ranked-bar-row.is-top .ranked-bar-rank {
+  background: var(--brand-500);
+  color: white;
+}
+
+.ranked-bar-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.ranked-bar-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.ranked-bar-row.is-top .ranked-bar-name {
+  font-weight: 800;
+}
+
+.ranked-bar-track-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ranked-bar-track {
+  flex: 1;
+  min-width: 0;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--chip-bg-strong);
+  overflow: hidden;
+}
+
+.ranked-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.15s ease;
+}
+
+.ranked-bar-row:hover .ranked-bar-fill {
+  filter: brightness(0.93);
+}
+
+.ranked-bar-value {
+  flex-shrink: 0;
+  min-width: 42px;
+  text-align: right;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.ranked-bar-tooltip {
+  position: absolute;
+  left: 33px;
+  top: 0;
+  transform: translateY(-100%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  z-index: 5;
+  white-space: nowrap;
+}
+
+.ranked-bar-row:hover .ranked-bar-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(calc(-100% - 6px));
+}
+
+@media (max-width: 480px) {
+  .ranked-bar-tooltip {
+    display: none;
+  }
+}
+
 /* Donut chart with a centered total + a right-side legend list */
 .donut-chart-row {
   display: flex;
