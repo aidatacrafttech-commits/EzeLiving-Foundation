@@ -98,7 +98,9 @@ export function PurchaseImportPanel({ warehouses, onConfirm, onClose }: Purchase
       </div>
 
       <label>
-        Restock into warehouse<span className="required-star">*</span>
+        <span>
+          Restock into warehouse<span className="required-star">*</span>
+        </span>
         <select value={warehouseId} onChange={(e) => setWarehouseId(Number(e.target.value))}>
           {warehouses.map((w) => (
             <option key={w.id} value={w.id}>

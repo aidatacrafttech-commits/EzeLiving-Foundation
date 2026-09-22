@@ -299,7 +299,9 @@ export function Billing() {
             <ScanLine size={19} /> Scan &amp; Lookup
           </h2>
           <label className="warehouse-select">
-            Billing counter<span className="required-star">*</span>
+            <span>
+              Billing counter<span className="required-star">*</span>
+            </span>
             <select
               value={cart.warehouseId ?? ""}
               onChange={(e) => cart.setWarehouseId(Number(e.target.value))}

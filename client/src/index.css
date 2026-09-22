@@ -364,14 +364,9 @@ label {
 }
 
 .required-star {
-  display: inline-block;
-  position: relative;
-  top: -6px;
-  margin-left: 2px;
   color: var(--danger);
-  font-size: 13px;
   font-weight: 800;
-  line-height: 0;
+  margin-left: 2px;
 }
 
 /* For a mandatory field that has no visible <label> text (placeholder-only

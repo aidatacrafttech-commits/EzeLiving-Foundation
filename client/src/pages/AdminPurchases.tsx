@@ -548,7 +548,9 @@ export function AdminPurchases() {
 
           <div className="form-grid">
             <label>
-              Warehouse<span className="required-star">*</span>
+              <span>
+                Warehouse<span className="required-star">*</span>
+              </span>
               <select
                 value={warehouseId}
                 onChange={(e) => {

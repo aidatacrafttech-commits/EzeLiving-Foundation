@@ -561,7 +561,9 @@ export function AdminProducts() {
 
             <div className="form-grid">
               <label>
-                How many new barcodes?<span className="required-star">*</span>
+                <span>
+                  How many new barcodes?<span className="required-star">*</span>
+                </span>
                 <input
                   type="number"
                   min={1}
@@ -652,11 +654,15 @@ export function AdminProducts() {
         </h3>
         <div className="form-grid">
           <label>
-            Name<span className="required-star">*</span>
+            <span>
+              Name<span className="required-star">*</span>
+            </span>
             <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
           </label>
           <label>
-            SKU<span className="required-star">*</span>
+            <span>
+              SKU<span className="required-star">*</span>
+            </span>
             <input
               value={form.sku}
               onChange={(e) => setForm({ ...form, sku: e.target.value })}
@@ -665,7 +671,9 @@ export function AdminProducts() {
             />
           </label>
           <label>
-            Barcode<span className="required-star">*</span>
+            <span>
+              Barcode<span className="required-star">*</span>
+            </span>
             <input
               value={form.barcode}
               onChange={(e) => setForm({ ...form, barcode: e.target.value })}
@@ -682,7 +690,9 @@ export function AdminProducts() {
             <input value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} />
           </label>
           <label>
-            MRP<span className="required-star">*</span>
+            <span>
+              MRP<span className="required-star">*</span>
+            </span>
             <input
               type="number"
               min={0}
@@ -692,7 +702,9 @@ export function AdminProducts() {
             />
           </label>
           <label>
-            Selling price<span className="required-star">*</span>
+            <span>
+              Selling price<span className="required-star">*</span>
+            </span>
             <input
               type="number"
               min={0}

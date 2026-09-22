@@ -230,7 +230,9 @@ export function AdminStockAdjust() {
           {mode === "adjust" ? (
             <div className="form-grid">
               <label>
-                Warehouse<span className="required-star">*</span>
+                <span>
+                  Warehouse<span className="required-star">*</span>
+                </span>
                 <select value={warehouseId} onChange={(e) => setWarehouseId(Number(e.target.value))}>
                   <option value="">Select</option>
                   {warehouses.map((w) => (
@@ -241,7 +243,9 @@ export function AdminStockAdjust() {
                 </select>
               </label>
               <label>
-                Change qty (+ in / - out)<span className="required-star">*</span>
+                <span>
+                  Change qty (+ in / - out)<span className="required-star">*</span>
+                </span>
                 <input type="number" value={changeQty} onChange={(e) => setChangeQty(e.target.value)} />
               </label>
               <label>
@@ -264,7 +268,9 @@ export function AdminStockAdjust() {
           ) : mode === "transfer" ? (
             <div className="form-grid">
               <label>
-                From warehouse<span className="required-star">*</span>
+                <span>
+                  From warehouse<span className="required-star">*</span>
+                </span>
                 <select value={fromWarehouseId} onChange={(e) => setFromWarehouseId(Number(e.target.value))}>
                   <option value="">Select</option>
                   {warehouses.map((w) => (
@@ -275,7 +281,9 @@ export function AdminStockAdjust() {
                 </select>
               </label>
               <label>
-                To warehouse<span className="required-star">*</span>
+                <span>
+                  To warehouse<span className="required-star">*</span>
+                </span>
                 <select value={toWarehouseId} onChange={(e) => setToWarehouseId(Number(e.target.value))}>
                   <option value="">Select</option>
                   {warehouses.map((w) => (
@@ -286,7 +294,9 @@ export function AdminStockAdjust() {
                 </select>
               </label>
               <label>
-                Quantity<span className="required-star">*</span>
+                <span>
+                  Quantity<span className="required-star">*</span>
+                </span>
                 <input type="number" min={1} value={transferQty} onChange={(e) => setTransferQty(e.target.value)} />
               </label>
               <label>
@@ -336,7 +346,9 @@ export function AdminStockAdjust() {
               )}
               <div className="form-grid">
                 <label>
-                  Warehouse<span className="required-star">*</span>
+                  <span>
+                    Warehouse<span className="required-star">*</span>
+                  </span>
                   <select value={damageWarehouseId} onChange={(e) => setDamageWarehouseId(Number(e.target.value))}>
                     <option value="">Select</option>
                     {warehouses.map((w) => (
@@ -347,7 +359,9 @@ export function AdminStockAdjust() {
                   </select>
                 </label>
                 <label>
-                  Qty to mark damaged<span className="required-star">*</span>
+                  <span>
+                    Qty to mark damaged<span className="required-star">*</span>
+                  </span>
                   <input
                     type="number"
                     min={1}
