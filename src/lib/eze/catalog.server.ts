@@ -484,7 +484,7 @@ async function generateBarcodes(ctx: Ctx) {
     codes.push(code);
   }
 
-  return codes;
+  return { codes };
 }
 
 const listQuerySchema = z.object({
