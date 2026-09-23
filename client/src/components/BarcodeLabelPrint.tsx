@@ -61,13 +61,33 @@ function buildLabelStyles(widthMm: number, heightMm: number): string {
 
 // JsBarcode's `width` option is the narrow-bar module width in SVG user
 // units (~px) — too thin and cheap printers/scanners can't resolve it,
-// too thick and it won't fit a small label. Scaling both it and the bar
-// height with the chosen label size (relative to the original 50x30mm
-// default) keeps the barcode proportioned to whatever size is picked,
-// clamped to a range that stays printable and scannable at either end.
-function barcodeDimensions(widthMm: number, heightMm: number) {
-  const barWidth = Math.max(1.2, Math.min(2.5, 1.6 * (widthMm / 50)));
+// too thick and it won't fit a small label. Scaling it with the chosen
+// label size (relative to the original 50x30mm default) keeps the
+// barcode proportioned to whatever size is picked — but that alone isn't
+// enough: a longer code (e.g. a material-prefixed "OT-EZE-2026-00017")
+// needs more modules than a short one, and at a fixed module width it
+// simply runs wider than the label, printing cramped/overlapping bars
+// that no scanner can decode even though the label itself looks fine.
+// So the module width is also capped to whatever still fits the code's
+// estimated total width inside the label's printable area.
+function barcodeDimensions(widthMm: number, heightMm: number, codeLength: number) {
   const barHeight = Math.max(20, Math.min(60, 40 * (heightMm / 30)));
+
+  // CODE128 budgets roughly 11 modules per data character, plus a start
+  // character, a checksum character, and a slightly longer stop pattern.
+  // This over-estimates a little on purpose (JsBarcode's own subset-
+  // switching can pack tighter) so the fit check stays conservative.
+  const estimatedModules = (codeLength + 3) * 11 + 2;
+
+  // Printable width available for the barcode: label width minus the 2mm
+  // padding on each side (see buildLabelStyles), mm -> CSS px at 96dpi
+  // (the unit JsBarcode's `width` option is denominated in).
+  const printablePx = ((widthMm - 4) / 25.4) * 96;
+  const maxBarWidthForFit = printablePx / estimatedModules;
+
+  const sizeScaledWidth = 1.6 * (widthMm / 50);
+  const barWidth = Math.max(1.0, Math.min(2.5, Math.min(sizeScaledWidth, maxBarWidthForFit)));
+
   return { barWidth, barHeight };
 }
 
@@ -88,7 +108,6 @@ function barcodeDimensions(widthMm: number, heightMm: number) {
 // many physical labels as there are entries.
 export function BarcodeLabelPrint({ entries, onDone, widthMm = 50, heightMm = 30 }: BarcodeLabelPrintProps) {
   const stagingRef = useRef<HTMLDivElement>(null);
-  const { barWidth, barHeight } = barcodeDimensions(widthMm, heightMm);
 
   useEffect(() => {
     if (entries.length === 0) return;
@@ -139,26 +158,29 @@ export function BarcodeLabelPrint({ entries, onDone, widthMm = 50, heightMm = 30
 
   return (
     <div ref={stagingRef} style={{ position: "fixed", top: 0, left: "-9999px" }} aria-hidden="true">
-      {labels.map(({ code, name, mrp, key }) => (
-        <div className="barcode-label" key={key}>
-          <span className="barcode-label-brand">Eze Living</span>
-          {name && <p className="barcode-label-name">{name}</p>}
-          <svg
-            ref={(el) => {
-              if (!el) return;
-              JsBarcode(el, code, {
-                format: "CODE128",
-                width: barWidth,
-                height: barHeight,
-                fontSize: 12,
-                margin: 0,
-                displayValue: true,
-              });
-            }}
-          />
-          {mrp !== undefined && <p className="barcode-label-price">MRP ₹{mrp.toFixed(2)}</p>}
-        </div>
-      ))}
+      {labels.map(({ code, name, mrp, key }) => {
+        const { barWidth, barHeight } = barcodeDimensions(widthMm, heightMm, code.length);
+        return (
+          <div className="barcode-label" key={key}>
+            <span className="barcode-label-brand">Eze Living</span>
+            {name && <p className="barcode-label-name">{name}</p>}
+            <svg
+              ref={(el) => {
+                if (!el) return;
+                JsBarcode(el, code, {
+                  format: "CODE128",
+                  width: barWidth,
+                  height: barHeight,
+                  fontSize: 12,
+                  margin: 0,
+                  displayValue: true,
+                });
+              }}
+            />
+            {mrp !== undefined && <p className="barcode-label-price">MRP ₹{mrp.toFixed(2)}</p>}
+          </div>
+        );
+      })}
     </div>
   );
 }
