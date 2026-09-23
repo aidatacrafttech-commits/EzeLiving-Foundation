@@ -24,6 +24,34 @@ import { BarcodeLabelPrint, type BarcodeLabelEntry } from "../components/Barcode
 import type { MappedImportRow } from "../utils/bulkImport";
 import type { GeneratedBarcode, Product, StockByWarehouse, Warehouse } from "../types";
 
+// Label-size presets for barcode printing — kept outside the component so
+// they're stable across renders. "custom" isn't listed here; it just means
+// "read the width/height number inputs instead of a preset".
+const LABEL_SIZE_PRESETS = [
+  { id: "50x30", label: "50 x 30mm (Standard)", widthMm: 50, heightMm: 30 },
+  { id: "40x20", label: "40 x 20mm (Small)", widthMm: 40, heightMm: 20 },
+  { id: "60x40", label: "60 x 40mm (Large)", widthMm: 60, heightMm: 40 },
+  { id: "custom", label: "Custom", widthMm: 0, heightMm: 0 },
+] as const;
+type LabelSizePresetId = (typeof LABEL_SIZE_PRESETS)[number]["id"];
+
+const LABEL_SIZE_STORAGE_KEY = "eze-barcode-label-size";
+
+function loadStoredLabelSize(): { presetId: LabelSizePresetId; widthMm: string; heightMm: string } {
+  try {
+    const raw = localStorage.getItem(LABEL_SIZE_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed.presetId === "string" && typeof parsed.widthMm === "string" && typeof parsed.heightMm === "string") {
+        return parsed;
+      }
+    }
+  } catch {
+    // localStorage unavailable or garbage content — fall through to defaults.
+  }
+  return { presetId: "50x30", widthMm: "50", heightMm: "30" };
+}
+
 const emptyForm = {
   name: "",
   sku: "",
@@ -124,6 +152,30 @@ export function AdminProducts() {
   // used last fills this and the actual <BarcodeLabelPrint /> render at the
   // bottom of the page picks it up.
   const [printEntries, setPrintEntries] = useState<BarcodeLabelEntry[]>([]);
+
+  // Physical label size for printing — persisted so it doesn't reset every
+  // visit once someone's dialed in the size that matches their printer/roll.
+  const storedLabelSize = useRef(loadStoredLabelSize()).current;
+  const [labelSizePreset, setLabelSizePreset] = useState<LabelSizePresetId>(storedLabelSize.presetId);
+  const [customLabelWidth, setCustomLabelWidth] = useState(storedLabelSize.widthMm);
+  const [customLabelHeight, setCustomLabelHeight] = useState(storedLabelSize.heightMm);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        LABEL_SIZE_STORAGE_KEY,
+        JSON.stringify({ presetId: labelSizePreset, widthMm: customLabelWidth, heightMm: customLabelHeight })
+      );
+    } catch {
+      // Best-effort persistence only.
+    }
+  }, [labelSizePreset, customLabelWidth, customLabelHeight]);
+
+  const activeLabelPreset = LABEL_SIZE_PRESETS.find((p) => p.id === labelSizePreset) ?? LABEL_SIZE_PRESETS[0];
+  const labelWidthMm =
+    labelSizePreset === "custom" ? Math.max(20, Math.min(100, Number(customLabelWidth) || 50)) : activeLabelPreset.widthMm;
+  const labelHeightMm =
+    labelSizePreset === "custom" ? Math.max(15, Math.min(80, Number(customLabelHeight) || 30)) : activeLabelPreset.heightMm;
 
   // "Generate New Barcodes" — mints brand-new codes via the pool (see
   // GeneratedBarcode on the backend) before any product exists, so a label
@@ -1019,6 +1071,52 @@ export function AdminProducts() {
 
             <div className="form-grid">
               <label>
+                Label size
+                <div className="material-toggle-group">
+                  {LABEL_SIZE_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      className={`material-toggle-btn${labelSizePreset === preset.id ? " active" : ""}`}
+                      onClick={() => setLabelSizePreset(preset.id)}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </label>
+              {labelSizePreset === "custom" ? (
+                <>
+                  <label>
+                    Width (mm)
+                    <input
+                      type="number"
+                      min={20}
+                      max={100}
+                      value={customLabelWidth}
+                      onChange={(e) => setCustomLabelWidth(e.target.value)}
+                    />
+                  </label>
+                  <label>
+                    Height (mm)
+                    <input
+                      type="number"
+                      min={15}
+                      max={80}
+                      value={customLabelHeight}
+                      onChange={(e) => setCustomLabelHeight(e.target.value)}
+                    />
+                  </label>
+                </>
+              ) : (
+                <p className="muted small" style={{ alignSelf: "flex-end", marginBottom: 8 }}>
+                  Applies to every label printed below (this and the "Mint labels" section above).
+                </p>
+              )}
+            </div>
+
+            <div className="form-grid">
+              <label>
                 Search
                 <input
                   placeholder="Search by name, SKU or barcode"
@@ -1227,6 +1325,8 @@ export function AdminProducts() {
 
       <BarcodeLabelPrint
         entries={printEntries}
+        widthMm={labelWidthMm}
+        heightMm={labelHeightMm}
         onDone={() => {
           setPrintEntries([]);
           setBarcodeGenCopies({});

@@ -11,16 +11,20 @@ export interface BarcodeLabelEntry {
 interface BarcodeLabelPrintProps {
   entries: BarcodeLabelEntry[];
   onDone: () => void;
+  /** Physical label size in millimeters. Defaults to the original 50x30mm. */
+  widthMm?: number;
+  heightMm?: number;
 }
 
-const LABEL_STYLES = `
-  @page { size: 50mm 30mm; margin: 0; }
+function buildLabelStyles(widthMm: number, heightMm: number): string {
+  return `
+  @page { size: ${widthMm}mm ${heightMm}mm; margin: 0; }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: Arial, Helvetica, sans-serif; }
   .barcode-label {
     position: relative;
-    width: 50mm;
-    height: 30mm;
+    width: ${widthMm}mm;
+    height: ${heightMm}mm;
     padding: 2mm;
     display: flex;
     flex-direction: column;
@@ -53,6 +57,19 @@ const LABEL_STYLES = `
   .barcode-label-price { margin: 2px 0 0; font-size: 10px; font-weight: 700; color: #000; }
   svg { display: block; }
 `;
+}
+
+// JsBarcode's `width` option is the narrow-bar module width in SVG user
+// units (~px) — too thin and cheap printers/scanners can't resolve it,
+// too thick and it won't fit a small label. Scaling both it and the bar
+// height with the chosen label size (relative to the original 50x30mm
+// default) keeps the barcode proportioned to whatever size is picked,
+// clamped to a range that stays printable and scannable at either end.
+function barcodeDimensions(widthMm: number, heightMm: number) {
+  const barWidth = Math.max(1.2, Math.min(2.5, 1.6 * (widthMm / 50)));
+  const barHeight = Math.max(20, Math.min(60, 40 * (heightMm / 30)));
+  return { barWidth, barHeight };
+}
 
 // Renders `copies` labels per entry into an off-screen staging area — just
 // far enough off-canvas to stay out of view, but still genuinely laid out
@@ -69,8 +86,9 @@ const LABEL_STYLES = `
 // label printer just fed through one after another. An isolated window
 // has nothing in it but the labels, so it can only ever produce exactly as
 // many physical labels as there are entries.
-export function BarcodeLabelPrint({ entries, onDone }: BarcodeLabelPrintProps) {
+export function BarcodeLabelPrint({ entries, onDone, widthMm = 50, heightMm = 30 }: BarcodeLabelPrintProps) {
   const stagingRef = useRef<HTMLDivElement>(null);
+  const { barWidth, barHeight } = barcodeDimensions(widthMm, heightMm);
 
   useEffect(() => {
     if (entries.length === 0) return;
@@ -96,7 +114,7 @@ export function BarcodeLabelPrint({ entries, onDone }: BarcodeLabelPrintProps) {
 
     printWindow.document.open();
     printWindow.document.write(
-      `<!doctype html><html><head><title>Barcode labels</title><style>${LABEL_STYLES}</style></head><body>${staging.innerHTML}</body></html>`
+      `<!doctype html><html><head><title>Barcode labels</title><style>${buildLabelStyles(widthMm, heightMm)}</style></head><body>${staging.innerHTML}</body></html>`
     );
     printWindow.document.close();
 
@@ -130,8 +148,8 @@ export function BarcodeLabelPrint({ entries, onDone }: BarcodeLabelPrintProps) {
               if (!el) return;
               JsBarcode(el, code, {
                 format: "CODE128",
-                width: 1.6,
-                height: 40,
+                width: barWidth,
+                height: barHeight,
                 fontSize: 12,
                 margin: 0,
                 displayValue: true,
