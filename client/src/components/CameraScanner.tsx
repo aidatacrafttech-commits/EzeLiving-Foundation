@@ -28,6 +28,16 @@ export function CameraScanner({ onScan }: CameraScannerProps) {
           Html5QrcodeSupportedFormats.UPC_A,
           Html5QrcodeSupportedFormats.CODE_128,
         ],
+        // Without this, html5-qrcode always decodes frames with its pure-JS
+        // ZXing fallback, which is noticeably worse at 1D barcodes (CODE128/
+        // EAN/UPC) than a phone's native decoder. Most Android Chrome/
+        // Samsung Internet browsers expose the Shape Detection API's
+        // BarcodeDetector (backed by on-device ML), which this opts into
+        // when present — it only changes which decoder reads each camera
+        // frame, so it can't affect getUserMedia/camera access itself.
+        // Browsers without it (Safari/iOS, most desktop browsers) silently
+        // keep using the ZXing fallback, same as before.
+        useBarCodeDetectorIfSupported: true,
         verbose: false,
       });
       scannerRef.current = scanner;
