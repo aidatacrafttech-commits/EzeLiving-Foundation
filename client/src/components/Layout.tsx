@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   ScanLine,
   History,
@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   Store,
+  ArrowLeft,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -38,11 +39,23 @@ function getPageMeta(pathname: string) {
   return { title: "Billing & Inventory", Icon: Store };
 }
 
+// Detail pages (an invoice, a hold, a staff member) reached by drilling into
+// a list — this maps that detail path back to the list it came from, for
+// the topbar's back button. Anything not a recognized detail path gets no
+// back button at all.
+function getBackTarget(pathname: string): string | null {
+  if (/^\/invoices\/[^/]+$/.test(pathname)) return "/invoices";
+  if (/^\/hold\/[^/]+$/.test(pathname)) return "/hold";
+  if (/^\/admin\/staff\/[^/]+$/.test(pathname)) return "/admin/staff";
+  return null;
+}
+
 export function Layout() {
   const { user, logout } = useAuth();
   const { mode, toggleMode } = useTheme();
   const { lines } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -67,6 +80,7 @@ export function Layout() {
 
   const pageMeta = getPageMeta(location.pathname);
   const PageIcon = pageMeta.Icon;
+  const backTarget = getBackTarget(location.pathname);
 
   const initials = user?.name
     ? user.name
@@ -208,6 +222,17 @@ export function Layout() {
             >
               <Menu size={18} />
             </button>
+            {backTarget && (
+              <button
+                type="button"
+                className="topbar-back-btn"
+                onClick={() => navigate(backTarget)}
+                aria-label="Back"
+                title="Back"
+              >
+                <ArrowLeft size={18} />
+              </button>
+            )}
             <h1 className="topbar-title">
               <PageIcon size={20} style={{ color: "var(--brand-600)" }} />
               <span>{pageMeta.title}</span>

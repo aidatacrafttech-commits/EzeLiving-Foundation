@@ -712,6 +712,29 @@ label {
   }
 }
 
+.topbar-back-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  background: var(--chip-bg);
+  color: var(--text-soft);
+  border: 1px solid var(--border-soft);
+  box-shadow: none;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.topbar-back-btn:hover:not(:disabled) {
+  background: var(--brand-50);
+  color: var(--brand-700);
+  transform: none;
+  box-shadow: none;
+}
+
 .topbar-title {
   font-family: var(--font-display);
   font-size: 18px;
