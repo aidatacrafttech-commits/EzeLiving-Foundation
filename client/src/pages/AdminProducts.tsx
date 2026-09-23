@@ -28,9 +28,9 @@ import type { GeneratedBarcode, Product, StockByWarehouse, Warehouse } from "../
 // they're stable across renders. "custom" isn't listed here; it just means
 // "read the width/height number inputs instead of a preset".
 const LABEL_SIZE_PRESETS = [
+  { id: "60x40", label: "60 x 40mm (Large — recommended)", widthMm: 60, heightMm: 40 },
   { id: "50x30", label: "50 x 30mm (Standard)", widthMm: 50, heightMm: 30 },
   { id: "40x20", label: "40 x 20mm (Small)", widthMm: 40, heightMm: 20 },
-  { id: "60x40", label: "60 x 40mm (Large)", widthMm: 60, heightMm: 40 },
   { id: "custom", label: "Custom", widthMm: 0, heightMm: 0 },
 ] as const;
 type LabelSizePresetId = (typeof LABEL_SIZE_PRESETS)[number]["id"];
@@ -49,7 +49,7 @@ function loadStoredLabelSize(): { presetId: LabelSizePresetId; widthMm: string; 
   } catch {
     // localStorage unavailable or garbage content — fall through to defaults.
   }
-  return { presetId: "50x30", widthMm: "50", heightMm: "30" };
+  return { presetId: "60x40", widthMm: "60", heightMm: "40" };
 }
 
 const emptyForm = {
